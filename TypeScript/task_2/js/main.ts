@@ -55,4 +55,14 @@ function executeWork(employee: Director | Teacher) {
     employee.workTeacherTasks();
   }
 }
+type Subjects = 'Math' | 'History';
 
+function teachClass(todayClass: Subjects) {
+  if (todayClass === 'Math') {
+    console.log('Teaching Math');
+  } else {
+    console.log('Teaching History');
+  }
+}
+teachClass('Math');
+teachClass('History');
