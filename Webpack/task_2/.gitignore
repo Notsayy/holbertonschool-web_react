@@ -1,0 +1,5 @@
+node_modules/
+package-lock.json
+public/bundle.js
+public/*.LICENSE.txt
+public/*.jpg
