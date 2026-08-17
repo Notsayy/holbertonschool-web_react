@@ -26,7 +26,9 @@ module.exports = {
   },
   plugins: [
     new CleanWebpackPlugin(),
-    new HtmlWebpackPlugin(),
+    new HtmlWebpackPlugin({
+      title: 'Holberton Dashboard',
+    }),
   ],
   module: {
     rules: [
