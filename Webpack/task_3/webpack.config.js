@@ -15,9 +15,8 @@ module.exports = {
   },
   devtool: 'inline-source-map',
   devServer: {
-    static: path.resolve(__dirname, 'public'),
+    static: path.resolve(__dirname, './public'),
     port: 8564,
-    open: true,
   },
   optimization: {
     splitChunks: {
