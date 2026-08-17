@@ -23,10 +23,24 @@ describe('App component', () => {
     expect(imageElement).toBeInTheDocument();
   });
 
-  test('renders email and password inputs with labels and OK button', () => {
-    render(<App />);
+  test('renders 2 input elements (one for email and the other for password)', () => {
+    const { container } = render(<App />);
+    const inputs = container.querySelectorAll('input');
+    expect(inputs.length).toBe(2);
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+  });
+
+  test('renders 2 label elements with the text Email and Password', () => {
+    const { container } = render(<App />);
+    const labels = container.querySelectorAll('label');
+    expect(labels.length).toBe(2);
+    expect(screen.getByText(/email/i)).toBeInTheDocument();
+    expect(screen.getByText(/password/i)).toBeInTheDocument();
+  });
+
+  test('renders a button with the text OK', () => {
+    render(<App />);
     expect(screen.getByRole('button', { name: /ok/i })).toBeInTheDocument();
   });
 
