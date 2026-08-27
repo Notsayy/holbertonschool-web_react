@@ -1,0 +1,21 @@
+#CourseList {
+  width: 90%;
+  margin: 40px auto;
+  border: 1px solid #ccc;
+  border-collapse: collapse;
+}
+
+#CourseList th,
+#CourseList td {
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  text-align: left;
+}
+
+#CourseList th {
+  border-bottom: 1px solid #ccc;
+}
+
+#CourseList tr:nth-child(1) th {
+  text-align: center;
+}
