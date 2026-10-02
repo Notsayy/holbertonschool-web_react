@@ -1,3 +1,3 @@
-# Dashboard Task 5
+# Dashboard Task 1
 
-React dashboard task 5 application.
+React dashboard task 1 application.
