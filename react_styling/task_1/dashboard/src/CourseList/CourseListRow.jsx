@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types';
 
 function CourseListRow({ isHeader = false, textFirstCell = '', textSecondCell = null }) {
-  const headerRowClass = 'bg-[--color-table-header]/66';
-  const dataRowClass = 'bg-[--color-table-rows]/45';
+  const headerRowClass = 'bg-table-header/66';
+  const dataRowClass = 'bg-table-rows/45';
   const cellClass = 'border border-gray-400';
   const tdClass = `${cellClass} pl-2`;
 
