@@ -47,7 +47,7 @@ class App extends Component {
     return (
       <Fragment>
         <div className="root-notifications flex flex-col items-end p-2.5 pb-0">
-          <Notifications displayDrawer={true} notifications={notificationsList} />
+          <Notifications notifications={notificationsList} />
         </div>
         <div className="App min-h-screen flex flex-col justify-between">
           <Header />
