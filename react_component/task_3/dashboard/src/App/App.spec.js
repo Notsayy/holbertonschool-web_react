@@ -7,6 +7,14 @@ describe('App component', () => {
     render(<App />);
   });
 
+  test('renders News from the School section with default text', () => {
+    render(<App />);
+    const heading = screen.getByRole('heading', { level: 2, name: /news from the school/i });
+    const paragraph = screen.getByText(/holberton school news goes here/i);
+    expect(heading).toBeInTheDocument();
+    expect(paragraph).toBeInTheDocument();
+  });
+
   describe('when isLoggedIn is false', () => {
     test('renders Login component and does not render CourseList', () => {
       const { container } = render(<App isLoggedIn={false} />);
