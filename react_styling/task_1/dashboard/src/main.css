@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme static {
+  --font-roboto: "Roboto", system-ui, sans-serif;
+  --color-table-header: #deb5b5;
+  --color-table-rows: #cdcdcd;
+}
+
+@layer base {
+
+  html,
+  body {
+    font-family: var(--font-roboto);
+  }
+}
