@@ -48,7 +48,7 @@ class App extends Component {
     return (
       <Fragment>
         <div className="root-notifications">
-          <Notifications notifications={notificationsList} />
+          <Notifications displayDrawer={true} notifications={notificationsList} />
         </div>
         <div className="App">
           <Header />

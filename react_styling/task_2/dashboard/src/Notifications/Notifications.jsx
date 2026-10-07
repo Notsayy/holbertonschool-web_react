@@ -28,7 +28,7 @@ class Notifications extends Component {
       <>
         <div className="notification-title text-right">Your notifications</div>
         {displayDrawer && (
-          <div className="notification-items border-2 border-dashed border-[var(--main-color)] p-1.5 relative w-1/4 float-right">
+          <div className="notification-items border-2 border-dashed border-[var(--main-color)] p-1.5 relative mt-[5px]">
             {notifications.length > 0 ? (
               <>
                 <button
