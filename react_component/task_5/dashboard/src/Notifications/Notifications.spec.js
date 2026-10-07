@@ -67,4 +67,49 @@ describe('Notifications component', () => {
     expect(consoleSpy).toHaveBeenCalledWith('Notification 1 has been marked as read');
     consoleSpy.mockRestore();
   });
+
+  test('does not re-render when the length of the notifications prop stays the same', () => {
+    const sameLength = [
+      { id: 1, type: 'default', value: 'New course available' },
+      { id: 2, type: 'urgent', value: 'New resume available' },
+      { id: 3, type: 'urgent', value: { __html: getLatestNotification() } },
+    ];
+    const { rerender, getAllByRole } = render(
+      <Notifications displayDrawer={true} notifications={notificationsList} />
+    );
+    const itemsBefore = getAllByRole('listitem').length;
+
+    rerender(
+      <Notifications
+        displayDrawer={true}
+        notifications={[
+          { id: 1, type: 'urgent', value: 'Changed value 1' },
+          { id: 2, type: 'default', value: 'Changed value 2' },
+          { id: 3, type: 'default', value: 'Changed value 3' },
+        ]}
+      />
+    );
+
+    const itemsAfter = getAllByRole('listitem').length;
+    expect(itemsAfter).toBe(itemsBefore);
+  });
+
+  test('re-renders when the length of the notifications prop changes', () => {
+    const { rerender, getAllByRole } = render(
+      <Notifications displayDrawer={true} notifications={notificationsList} />
+    );
+    expect(getAllByRole('listitem').length).toBe(3);
+
+    rerender(
+      <Notifications
+        displayDrawer={true}
+        notifications={[
+          { id: 1, type: 'default', value: 'New course available' },
+          { id: 2, type: 'urgent', value: 'New resume available' },
+        ]}
+      />
+    );
+
+    expect(getAllByRole('listitem').length).toBe(2);
+  });
 });
