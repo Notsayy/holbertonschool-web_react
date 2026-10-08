@@ -47,10 +47,10 @@ class App extends Component {
     const displayDrawer = true;
     return (
       <Fragment>
-        <div className="root-notifications flex flex-col items-end p-2.5 pb-0 max-[912px]:p-0 max-[912px]:pt-1 max-[912px]:pr-5">
+        <div className="root-notifications relative z-10 flex flex-col items-end p-2.5 pb-0 max-[912px]:absolute max-[912px]:top-0 max-[912px]:right-0 max-[912px]:p-0 max-[912px]:pt-1 max-[912px]:pr-5">
           <Notifications displayDrawer={displayDrawer} notifications={notificationsList} />
         </div>
-        <div className="App min-h-screen flex flex-col justify-between p-4 sm:p-8 max-[520px]:p-3">
+        <div className="App min-h-screen flex flex-col justify-between p-4 sm:p-8 max-[520px]:p-3 max-[520px]:pt-0">
           <Header />
           <div className="flex-1">
             {isLoggedIn ? (
@@ -64,7 +64,7 @@ class App extends Component {
             )}
           </div>
           <BodySection title="News from the School">
-            <p>ipsum Lorem ipsum dolor sit amet consectetur, adipisicing elit. Similique, asperiores architecto blanditiis fuga doloribus sit illum aliquid ea distinctio minus accusantium, impedit quo voluptatibus ut magni dicta. Recusandae, quia dicta?</p>
+            <p className="max-[520px]:-mt-3 max-[520px]:-mb-5">ipsum Lorem ipsum dolor sit amet consectetur, adipisicing elit. Similique, asperiores architecto blanditiis fuga doloribus sit illum aliquid ea distinctio minus accusantium, impedit quo voluptatibus ut magni dicta. Recusandae, quia dicta?</p>
           </BodySection>
           <Footer />
         </div>
