@@ -44,7 +44,7 @@ class App extends Component {
 
   render() {
     const { isLoggedIn } = this.props;
-    const displayDrawer = false;
+    const displayDrawer = true;
     return (
       <Fragment>
         <div className="root-notifications flex flex-col items-end p-2.5 pb-0 max-[912px]:p-0 max-[912px]:pt-1 max-[912px]:pr-5">
