@@ -44,23 +44,25 @@ class App extends Component {
 
   render() {
     const { isLoggedIn } = this.props;
-    const displayDrawer = true;
+    const displayDrawer = false;
     return (
       <Fragment>
-        <div className="root-notifications flex flex-col items-end p-2.5 pb-0 max-[912px]:p-0">
+        <div className="root-notifications flex flex-col items-end p-2.5 pb-0 max-[912px]:p-0 max-[912px]:pt-1 max-[912px]:pr-5">
           <Notifications displayDrawer={displayDrawer} notifications={notificationsList} />
         </div>
-        <div className="App min-h-screen flex flex-col justify-between p-4 sm:p-8 max-[520px]:p-2">
+        <div className="App min-h-screen flex flex-col justify-between p-4 sm:p-8 max-[520px]:p-2.5">
           <Header />
-          {isLoggedIn ? (
-            <BodySectionWithMarginBottom title="Course list">
-              <CourseList courses={coursesList} />
-            </BodySectionWithMarginBottom>
-          ) : (
-            <BodySectionWithMarginBottom title="Log in to continue">
-              <Login />
-            </BodySectionWithMarginBottom>
-          )}
+          <div className="flex-1">
+            {isLoggedIn ? (
+              <BodySectionWithMarginBottom title="Course list">
+                <CourseList courses={coursesList} />
+              </BodySectionWithMarginBottom>
+            ) : (
+              <BodySectionWithMarginBottom title="Log in to continue">
+                <Login />
+              </BodySectionWithMarginBottom>
+            )}
+          </div>
           <BodySection title="News from the School">
             <p>ipsum Lorem ipsum dolor sit amet consectetur, adipisicing elit. Similique, asperiores architecto blanditiis fuga doloribus sit illum aliquid ea distinctio minus accusantium, impedit quo voluptatibus ut magni dicta. Recusandae, quia dicta?</p>
           </BodySection>
@@ -78,7 +80,7 @@ App.propTypes = {
 
 App.defaultProps = {
   isLoggedIn: false,
-  logOut: () => {},
+  logOut: () => { },
 };
 
 export default App;
