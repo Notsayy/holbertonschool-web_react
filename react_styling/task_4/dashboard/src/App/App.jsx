@@ -44,10 +44,11 @@ class App extends Component {
 
   render() {
     const { isLoggedIn } = this.props;
+    const displayDrawer = true;
     return (
       <Fragment>
         <div className="root-notifications flex flex-col items-end p-2.5 pb-0 max-[912px]:p-0">
-          <Notifications displayDrawer={true} notifications={notificationsList} />
+          <Notifications displayDrawer={displayDrawer} notifications={notificationsList} />
         </div>
         <div className="App min-h-screen flex flex-col justify-between p-4 sm:p-8 max-[520px]:p-2">
           <Header />
