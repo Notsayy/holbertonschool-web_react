@@ -6,7 +6,7 @@ class BodySection extends Component {
     const { title, children } = this.props;
 
     return (
-      <div className="bodySection my-5 pb-5 border-b-2 border-[var(--main-color)]">
+      <div className="bodySection my-5">
         <h2 className="text-xl font-bold mb-3 max-[520px]:text-lg">{title}</h2>
         {children}
       </div>
