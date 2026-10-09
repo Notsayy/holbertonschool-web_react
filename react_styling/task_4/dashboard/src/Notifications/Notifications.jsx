@@ -10,7 +10,10 @@ class Notifications extends Component {
   }
 
   shouldComponentUpdate(nextProps) {
-    return nextProps.notifications.length !== this.props.notifications.length;
+    return (
+      nextProps.notifications.length !== this.props.notifications.length ||
+      nextProps.displayDrawer !== this.props.displayDrawer
+    );
   }
 
   markAsRead(id) {
@@ -19,6 +22,7 @@ class Notifications extends Component {
 
   render() {
     const { displayDrawer, notifications } = this.props;
+    const isBouncing = notifications && notifications.length > 0 && !displayDrawer;
 
     const handleClose = () => {
       console.log('Close button has been clicked');
@@ -26,7 +30,7 @@ class Notifications extends Component {
 
     return (
       <>
-        <div className="notification-title text-right">Your notifications</div>
+        <div className={`notification-title text-right${isBouncing ? ' animate-bounce' : ''}`}>Your notifications</div>
         {displayDrawer && (
           <div className="notification-items border-2 border-dashed border-[var(--main-color)] p-1.5 relative mt-[5px] max-[912px]:fixed max-[912px]:top-0 max-[912px]:left-0 max-[912px]:w-full max-[912px]:h-full max-[912px]:bg-white max-[912px]:z-50 max-[912px]:p-3 max-[912px]:m-0 max-[912px]:text-[20px]">
             {notifications.length > 0 ? (
