@@ -50,7 +50,7 @@ class App extends Component {
         <div className="root-notifications relative z-10 flex flex-col items-end p-2.5 pb-0 max-[912px]:absolute max-[912px]:top-0 max-[912px]:right-0 max-[912px]:p-0 max-[912px]:pt-1 max-[912px]:pr-5">
           <Notifications displayDrawer={displayDrawer} notifications={notificationsList} />
         </div>
-        <div className="App min-h-screen flex flex-col justify-between p-4 sm:p-8 max-[520px]:p-3 max-[520px]:pt-0">
+        <div className={`App min-h-screen flex flex-col justify-between p-4 sm:p-8 max-[520px]:p-3 max-[520px]:pt-0 ${isLoggedIn ? 'max-[520px]:pb-[3px]' : ''}`}>
           <Header />
           <div className="flex-1">
             {isLoggedIn ? (
