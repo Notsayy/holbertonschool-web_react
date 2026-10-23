@@ -5,3 +5,4 @@ This project covers React state management, component interaction, and event han
 ## Tasks
 
 - **task_0**: Adding a local state for notifications (displayDrawer state and handlers)
+- **task_1**: Controlled login inputs, validation with state callbacks, and local login submission
