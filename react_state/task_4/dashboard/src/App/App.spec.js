@@ -288,16 +288,27 @@ describe('App component', () => {
 
     test('shows the empty message after every notification is clicked', () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const errorSpy = jest.spyOn(console, 'error');
       try {
         const ref = createRef();
         render(<App ref={ref} />);
         fireEvent.click(screen.getByText(/your notifications/i));
-        screen.getAllByRole('listitem').forEach((item) => fireEvent.click(item));
+        consoleSpy.mockClear();
+        [1, 2, 3].forEach((id) => {
+          fireEvent.click(screen.getAllByRole('listitem')[0]);
+          expect(screen.queryAllByRole('listitem')).toHaveLength(3 - id);
+          expect(ref.current.state.notifications.map((notification) => notification.id))
+            .toEqual([1, 2, 3].filter((notificationId) => notificationId > id));
+          expect(consoleSpy).toHaveBeenNthCalledWith(id, `Notification ${id} has been marked as read`);
+        });
+        expect(consoleSpy).toHaveBeenCalledTimes(3);
+        expect(errorSpy).not.toHaveBeenCalled();
         expect(ref.current.state.notifications).toEqual([]);
         expect(screen.queryAllByRole('listitem')).toHaveLength(0);
         expect(screen.getByText('No new notification for now')).toBeInTheDocument();
       } finally {
         consoleSpy.mockRestore();
+        errorSpy.mockRestore();
       }
     });
 
