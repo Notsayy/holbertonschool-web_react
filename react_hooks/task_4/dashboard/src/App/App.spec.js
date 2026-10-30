@@ -1,11 +1,47 @@
+/* global process */
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import mockAxios from 'jest-mock-axios'
 import App from './App'
 import Notifications from '../Notifications/Notifications'
 import { user as defaultUser } from '../Context/context'
 import { getLatestNotification } from '../utils/utils'
 
-const renderApp = () => render(<App />)
+const NOTIFICATIONS_URL = 'http://localhost:5173/notifications.json'
+const COURSES_URL = 'http://localhost:5173/courses.json'
+
+const notificationsData = [
+  { id: 1, type: 'default', value: 'New course available' },
+  { id: 2, type: 'urgent', value: 'New resume available' },
+  { id: 3, type: 'urgent', html: { __html: '' } },
+]
+
+const coursesData = [
+  { id: 1, name: 'ES6', credit: 60 },
+  { id: 2, name: 'Webpack', credit: 20 },
+  { id: 3, name: 'React', credit: 40 },
+]
+
+const respondWith = async (url, data) => {
+  await act(async () => {
+    mockAxios.mockResponseFor({ url }, { data })
+  })
+}
+
+const respondWithNotifications = (notifications = notificationsData) =>
+  respondWith(NOTIFICATIONS_URL, { notifications })
+
+const respondWithCourses = (courses = coursesData) =>
+  respondWith(COURSES_URL, { courses })
+
+const requestsTo = (url) =>
+  mockAxios.get.mock.calls.filter(([calledUrl]) => calledUrl === url)
+
+const renderApp = async () => {
+  const view = render(<App />)
+  await respondWithNotifications()
+  return view
+}
 const mockContextValues = []
 const mockRenderedProps = { BodySection: [], CourseList: [], Login: [] }
 
@@ -69,6 +105,7 @@ describe('App', () => {
 
   afterEach(() => {
     cleanup()
+    mockAxios.reset()
     try {
       expect(console.error).not.toHaveBeenCalled()
       expect(console.warn).not.toHaveBeenCalled()
@@ -85,24 +122,25 @@ describe('App', () => {
     await user.type(screen.getByLabelText(/email/i), email)
     await user.type(screen.getByLabelText(/password/i), password)
     await user.click(screen.getByRole('button', { name: /^ok$/i }))
+    await respondWithCourses()
   }
 
-  test('renders an h1 with the text School dashboard', () => {
-    renderApp()
+  test('renders an h1 with the text School dashboard', async () => {
+    await renderApp()
 
     expect(
       screen.getByRole('heading', { level: 1, name: /school dashboard/i })
     ).toBeInTheDocument()
   })
 
-  test('renders an img element', () => {
-    renderApp()
+  test('renders an img element', async () => {
+    await renderApp()
 
     expect(screen.getByAltText(/holberton logo/i)).toBeInTheDocument()
   })
 
-  test('renders the News from the School section by default', () => {
-    renderApp()
+  test('renders the News from the School section by default', async () => {
+    await renderApp()
 
     expect(
       screen.getByRole('heading', { name: /news from the school/i })
@@ -112,8 +150,8 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  test('wraps the Login form in a body section titled Log in to continue', () => {
-    const { container } = renderApp()
+  test('wraps the Login form in a body section titled Log in to continue', async () => {
+    const { container } = await renderApp()
 
     expect(
       screen.getByRole('heading', { name: /log in to continue/i })
@@ -123,8 +161,8 @@ describe('App', () => {
     ).not.toHaveLength(0)
   })
 
-  test('renders the Login form until the user logs in', () => {
-    const { container } = renderApp()
+  test('renders the Login form until the user logs in', async () => {
+    const { container } = await renderApp()
 
     expect(
       screen.getByText(/login to access the full dashboard/i)
@@ -136,7 +174,7 @@ describe('App', () => {
   })
 
   test('renders the CourseList in place of the Login form once logged in', async () => {
-    const { container } = renderApp()
+    const { container } = await renderApp()
 
     await logIn()
 
@@ -151,7 +189,7 @@ describe('App', () => {
   })
 
   test('wraps the CourseList in a body section titled Course list', async () => {
-    const { container } = renderApp()
+    const { container } = await renderApp()
 
     await logIn()
 
@@ -161,16 +199,16 @@ describe('App', () => {
     expect(wrapper).toBeInTheDocument()
   })
 
-  test('opens the notifications drawer by default', () => {
-    renderApp()
+  test('opens the notifications drawer by default', async () => {
+    await renderApp()
 
     expect(
       screen.getByText(/here is the list of notifications/i)
     ).toBeInTheDocument()
   })
 
-  test('reopens the notifications drawer when Your notifications is clicked', () => {
-    renderApp()
+  test('reopens the notifications drawer when Your notifications is clicked', async () => {
+    await renderApp()
 
     fireEvent.click(screen.getByRole('button', { name: /close/i }))
     fireEvent.click(screen.getByText(/your notifications/i))
@@ -180,8 +218,8 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  test('closes the notifications drawer when the close button is clicked', () => {
-    renderApp()
+  test('closes the notifications drawer when the close button is clicked', async () => {
+    await renderApp()
 
     fireEvent.click(screen.getByText(/your notifications/i))
     fireEvent.click(screen.getByRole('button', { name: /close/i }))
@@ -192,8 +230,8 @@ describe('App', () => {
   })
 
   describe('marking a notification as read', () => {
-    test('removes the clicked item from the list and logs its id', () => {
-      const { container } = renderApp()
+    test('removes the clicked item from the list and logs its id', async () => {
+      const { container } = await renderApp()
       fireEvent.click(screen.getByText(/your notifications/i))
 
       fireEvent.click(screen.getByText(/new course available/i))
@@ -207,8 +245,8 @@ describe('App', () => {
       )
     })
 
-    test('removes only the item that was clicked, whatever its position', () => {
-      const { container } = renderApp()
+    test('removes only the item that was clicked, whatever its position', async () => {
+      const { container } = await renderApp()
       fireEvent.click(screen.getByText(/your notifications/i))
 
       fireEvent.click(screen.getByText(/new resume available/i))
@@ -224,8 +262,8 @@ describe('App', () => {
       )
     })
 
-    test('shows the empty state once every notification is read', () => {
-      const { container } = renderApp()
+    test('shows the empty state once every notification is read', async () => {
+      const { container } = await renderApp()
       fireEvent.click(screen.getByText(/your notifications/i))
 
       for (let i = 0; i < 3; i += 1) {
@@ -239,14 +277,14 @@ describe('App', () => {
   })
 
   describe('the Contact us link of the Footer', () => {
-    test('is not displayed before logging in', () => {
-      renderApp()
+    test('is not displayed before logging in', async () => {
+      await renderApp()
 
       expect(screen.queryByText(/contact us/i)).not.toBeInTheDocument()
     })
 
     test('appears once logged in and goes away after logging out', async () => {
-      renderApp()
+      await renderApp()
 
       await logIn()
       expect(
@@ -259,7 +297,7 @@ describe('App', () => {
   })
 
   test('keeps the notifications drawer working once logged in', async () => {
-    renderApp()
+    await renderApp()
 
     await logIn()
     fireEvent.click(screen.getByText(/your notifications/i))
@@ -270,14 +308,14 @@ describe('App', () => {
   })
 
   describe('the logout section of the Header', () => {
-    test('is not rendered before logging in', () => {
-      const { container } = renderApp()
+    test('is not rendered before logging in', async () => {
+      const { container } = await renderApp()
 
       expect(container.querySelector('#logoutSection')).toBeNull()
     })
 
     test('welcomes the user by email once logged in', async () => {
-      const { container } = renderApp()
+      const { container } = await renderApp()
 
       await logIn()
 
@@ -287,7 +325,7 @@ describe('App', () => {
     })
 
     test('logs the user out when logout is clicked', async () => {
-      const { container } = renderApp()
+      const { container } = await renderApp()
       await logIn()
 
       fireEvent.click(screen.getByText(/^logout$/i))
@@ -300,7 +338,7 @@ describe('App', () => {
     })
 
     test('starts the Login form empty again after logging out', async () => {
-      renderApp()
+      await renderApp()
       await logIn()
 
       fireEvent.click(screen.getByText(/^logout$/i))
@@ -311,14 +349,14 @@ describe('App', () => {
     })
   })
 
-  test('is a function component', () => {
+  test('is a function component', async () => {
     expect(typeof App).toBe('function')
     expect(App.prototype?.isReactComponent).toBeUndefined()
   })
 
   test('no longer logs out or alerts when ctrl and h are pressed', async () => {
     const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
-    const { container } = renderApp()
+    const { container } = await renderApp()
     await logIn()
 
     fireEvent.keyDown(document, { key: 'h', ctrlKey: true })
@@ -331,8 +369,8 @@ describe('App', () => {
     const drawerIsOpen = (container) =>
       container.querySelector('.notification-items') !== null
 
-    test('handleHideDrawer sets displayDrawer to false', () => {
-      const { container } = renderApp()
+    test('handleHideDrawer sets displayDrawer to false', async () => {
+      const { container } = await renderApp()
       expect(drawerIsOpen(container)).toBe(true)
 
       fireEvent.click(screen.getByRole('button', { name: /close/i }))
@@ -340,8 +378,8 @@ describe('App', () => {
       expect(drawerIsOpen(container)).toBe(false)
     })
 
-    test('handleDisplayDrawer sets displayDrawer to true', () => {
-      const { container } = renderApp()
+    test('handleDisplayDrawer sets displayDrawer to true', async () => {
+      const { container } = await renderApp()
       fireEvent.click(screen.getByRole('button', { name: /close/i }))
 
       fireEvent.click(screen.getByText(/your notifications/i))
@@ -349,16 +387,16 @@ describe('App', () => {
       expect(drawerIsOpen(container)).toBe(true)
     })
 
-    test('handleDisplayDrawer keeps an open drawer open', () => {
-      const { container } = renderApp()
+    test('handleDisplayDrawer keeps an open drawer open', async () => {
+      const { container } = await renderApp()
 
       fireEvent.click(screen.getByText(/your notifications/i))
 
       expect(drawerIsOpen(container)).toBe(true)
     })
 
-    test('can be toggled again and again', () => {
-      const { container } = renderApp()
+    test('can be toggled again and again', async () => {
+      const { container } = await renderApp()
 
       for (let i = 0; i < 2; i += 1) {
         fireEvent.click(screen.getByRole('button', { name: /close/i }))
@@ -370,8 +408,8 @@ describe('App', () => {
   })
 
   describe('the user state', () => {
-    test('starts as the user of the context: logged out, no credentials', () => {
-      renderApp()
+    test('starts as the user of the context: logged out, no credentials', async () => {
+      await renderApp()
 
       expect(userState()).toEqual({
         email: '',
@@ -381,7 +419,7 @@ describe('App', () => {
     })
 
     test('logIn sets the email, the password and isLoggedIn to true', async () => {
-      renderApp()
+      await renderApp()
 
       await logIn()
 
@@ -393,7 +431,7 @@ describe('App', () => {
     })
 
     test('logOut sets isLoggedIn to false and clears the email and password', async () => {
-      renderApp()
+      await renderApp()
       await logIn()
 
       fireEvent.click(screen.getByText(/^logout$/i))
@@ -406,7 +444,7 @@ describe('App', () => {
     })
 
     test('logIn works again after a logOut, with the new credentials', async () => {
-      renderApp()
+      await renderApp()
       await logIn()
       fireEvent.click(screen.getByText(/^logout$/i))
 
@@ -421,7 +459,7 @@ describe('App', () => {
   })
 
   test('keeps the notifications when the user logs in and out', async () => {
-    const { container } = renderApp()
+    const { container } = await renderApp()
     fireEvent.click(screen.getByText(/new course available/i))
 
     await logIn()
@@ -430,8 +468,8 @@ describe('App', () => {
     expect(container.querySelectorAll('.notification-items li')).toHaveLength(2)
   })
 
-  test('renders notificationsList immediately, including the latest markup', () => {
-    const { container } = renderApp()
+  test('renders the fetched notifications, including the latest markup', async () => {
+    const { container } = await renderApp()
     const items = container.querySelectorAll('.notification-items li')
 
     expect(items).toHaveLength(3)
@@ -440,8 +478,8 @@ describe('App', () => {
     expect(items[2].innerHTML).toBe(getLatestNotification())
   })
 
-  test('renders the existing courses as soon as the user logs in', async () => {
-    const { container } = renderApp()
+  test('renders the fetched courses as soon as the user logs in', async () => {
+    const { container } = await renderApp()
 
     await logIn()
 
@@ -454,7 +492,7 @@ describe('App', () => {
   })
 
   test('logIn and logOut replace user without mutating previous users', async () => {
-    renderApp()
+    await renderApp()
     const initialUser = mockContextValues.at(-1).user
     expect(initialUser).toBe(defaultUser)
 
@@ -475,9 +513,9 @@ describe('App', () => {
     expect(userState()).toEqual({ email: '', password: '', isLoggedIn: false })
   })
 
-  test('removes two notifications in one update without mutating the original list', () => {
+  test('removes two notifications in one update without mutating the original list', async () => {
     const notificationsSpy = jest.spyOn(Notifications, 'type')
-    const { container } = renderApp()
+    const { container } = await renderApp()
     const { notifications, markNotificationAsRead } =
       notificationsSpy.mock.lastCall[0]
     const originalNotifications = notifications.map((notification) => ({ ...notification }))
@@ -497,7 +535,7 @@ describe('App', () => {
 
   test('keeps drawer callbacks and logOut stable across state changes', async () => {
     const notificationsSpy = jest.spyOn(Notifications, 'type')
-    renderApp()
+    await renderApp()
     const initialProps = notificationsSpy.mock.lastCall[0]
     const initialContext = mockContextValues.at(-1)
 
@@ -520,12 +558,12 @@ describe('App', () => {
     expect(reopenedProps.markNotificationAsRead).toBe(initialProps.markNotificationAsRead)
   })
 
-  test('starts a new App with all notifications after another App marks one as read', () => {
-    const { unmount } = renderApp()
+  test('starts a new App with all notifications after another App marks one as read', async () => {
+    const { unmount } = await renderApp()
     fireEvent.click(screen.getByText('New course available'))
 
     unmount()
-    const { container } = renderApp()
+    const { container } = await renderApp()
 
     expect(container.querySelectorAll('.notification-items li')).toHaveLength(3)
     expect(screen.getByText('New course available')).toBeInTheDocument()
@@ -549,9 +587,9 @@ describe('App', () => {
       })
     }
 
-    test('passes boolean drawer state, typed notifications and function callbacks', () => {
+    test('passes boolean drawer state, typed notifications and function callbacks', async () => {
       const notificationsSpy = jest.spyOn(Notifications, 'type')
-      renderApp()
+      await renderApp()
 
       expectNotificationProps(notificationsSpy.mock.lastCall[0])
       expect(notificationsSpy.mock.lastCall[0].displayDrawer).toBe(true)
@@ -567,21 +605,19 @@ describe('App', () => {
     })
 
     test('passes courses with numeric ids and credits rather than numeric strings', async () => {
-      renderApp()
+      await renderApp()
       await logIn()
 
       expect(mockRenderedProps.CourseList.length).toBeGreaterThan(0)
-      mockRenderedProps.CourseList.forEach(({ courses }) => {
-        expect(courses).toStrictEqual([
-          { id: 1, name: 'ES6', credit: 60 },
-          { id: 2, name: 'Webpack', credit: 20 },
-          { id: 3, name: 'React', credit: 40 },
-        ])
-      })
+      expect(mockRenderedProps.CourseList.at(-1).courses).toStrictEqual([
+        { id: 1, name: 'ES6', credit: 60 },
+        { id: 2, name: 'Webpack', credit: 20 },
+        { id: 3, name: 'React', credit: 40 },
+      ])
     })
 
     test('passes string credentials and a login function before and after logout', async () => {
-      renderApp()
+      await renderApp()
       expect(mockRenderedProps.Login.length).toBeGreaterThan(0)
       expect(mockRenderedProps.Login.at(-1)).toEqual(expect.objectContaining({
         email: '',
@@ -600,7 +636,7 @@ describe('App', () => {
     })
 
     test('passes string section titles and a correctly typed context throughout authentication', async () => {
-      renderApp()
+      await renderApp()
       await logIn()
       fireEvent.click(screen.getByText(/^logout$/i))
 
@@ -614,6 +650,143 @@ describe('App', () => {
         expect(typeof user.isLoggedIn).toBe('boolean')
         expect(typeof logOut).toBe('function')
       })
+    })
+  })
+
+  describe('data fetching', () => {
+    const failNextRequest = async () => {
+      await act(async () => {
+        mockAxios.mockError(new Error('Network Error'))
+      })
+    }
+
+    test('requests the notifications as soon as the App renders', () => {
+      render(<App />)
+
+      expect(requestsTo(NOTIFICATIONS_URL)).toHaveLength(1)
+    })
+
+    test('shows no notification until the response arrives', async () => {
+      const { container } = render(<App />)
+
+      expect(screen.getByText(/no new notification for now/i)).toBeInTheDocument()
+      expect(container.querySelectorAll('.notification-items li')).toHaveLength(0)
+
+      await respondWithNotifications()
+
+      expect(container.querySelectorAll('.notification-items li')).toHaveLength(3)
+    })
+
+    test('requests the notifications only once, whatever the user does', async () => {
+      await renderApp()
+
+      await logIn()
+      fireEvent.click(screen.getByText(/^logout$/i))
+      await logIn()
+
+      expect(requestsTo(NOTIFICATIONS_URL)).toHaveLength(1)
+    })
+
+    test('does not request the courses while the user is logged out', async () => {
+      await renderApp()
+
+      expect(requestsTo(COURSES_URL)).toHaveLength(0)
+    })
+
+    test('requests the courses when the user logs in', async () => {
+      await renderApp()
+
+      await logIn()
+
+      expect(requestsTo(COURSES_URL)).toHaveLength(1)
+    })
+
+    test('requests the courses again each time the user logs in', async () => {
+      await renderApp()
+
+      await logIn()
+      fireEvent.click(screen.getByText(/^logout$/i))
+      expect(requestsTo(COURSES_URL)).toHaveLength(1)
+
+      await logIn('other@example.com', 'another-password')
+      expect(requestsTo(COURSES_URL)).toHaveLength(2)
+    })
+
+    test('renders the courses returned by the response', async () => {
+      const { container } = await renderApp()
+      const user = userEvent.setup()
+
+      await user.type(screen.getByLabelText(/email/i), 'user@example.com')
+      await user.type(screen.getByLabelText(/password/i), 'secret-password')
+      await user.click(screen.getByRole('button', { name: /^ok$/i }))
+      await respondWithCourses([{ id: 7, name: 'Node', credit: 30 }])
+
+      const rows = Array.from(container.querySelectorAll('#CourseList tbody tr'))
+      expect(rows.map((row) => row.textContent)).toEqual(['Node30'])
+    })
+
+    test('fills the empty markup of the latest notification', async () => {
+      const { container } = await renderApp()
+
+      expect(container.querySelectorAll('.notification-items li')[2].innerHTML).toBe(
+        getLatestNotification()
+      )
+    })
+
+    test('keeps the App usable when the notifications request fails', async () => {
+      const { container } = render(<App />)
+
+      await failNextRequest()
+
+      expect(screen.getByText(/no new notification for now/i)).toBeInTheDocument()
+      expect(container.querySelector('#CourseList')).not.toBeInTheDocument()
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
+    })
+
+    test('keeps the course list empty when the courses request fails', async () => {
+      const { container } = await renderApp()
+      const user = userEvent.setup()
+
+      await user.type(screen.getByLabelText(/email/i), 'user@example.com')
+      await user.type(screen.getByLabelText(/password/i), 'secret-password')
+      await user.click(screen.getByRole('button', { name: /^ok$/i }))
+      await failNextRequest()
+
+      expect(container.querySelector('#CourseList')).toBeInTheDocument()
+      expect(screen.getByText(/no course available yet/i)).toBeInTheDocument()
+    })
+
+    test('logs a failed request to the console in development mode only', async () => {
+      const previousEnv = process.env.NODE_ENV
+      process.env.NODE_ENV = 'development'
+
+      try {
+        render(<App />)
+        await failNextRequest()
+
+        expect(console.error).toHaveBeenCalledTimes(1)
+        expect(console.error).toHaveBeenCalledWith(expect.any(Error))
+        console.error.mockClear()
+      } finally {
+        process.env.NODE_ENV = previousEnv
+      }
+    })
+
+    test('stays silent about a failed request outside development mode', async () => {
+      render(<App />)
+
+      await failNextRequest()
+
+      expect(console.error).not.toHaveBeenCalled()
+    })
+
+    test('ignores a response that arrives after the App is unmounted', async () => {
+      const { unmount } = render(<App />)
+
+      unmount()
+      await respondWithNotifications()
+
+      expect(console.error).not.toHaveBeenCalled()
     })
   })
 })

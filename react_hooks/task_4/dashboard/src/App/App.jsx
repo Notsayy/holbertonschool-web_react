@@ -1,4 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
+/* global process */
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
 import Notifications from '../Notifications/Notifications'
 import Header from '../Header/Header'
 import Login from '../Login/Login'
@@ -11,22 +13,69 @@ import { getLatestNotification } from '../utils/utils'
 
 const ContextProvider = newContext.Provider
 
-const notificationsList = [
-  { id: 1, type: 'default', value: 'New course available' },
-  { id: 2, type: 'urgent', value: 'New resume available' },
-  { id: 3, type: 'urgent', html: { __html: getLatestNotification() } },
-]
+const NOTIFICATIONS_URL = 'http://localhost:5173/notifications.json'
+const COURSES_URL = 'http://localhost:5173/courses.json'
 
-const coursesList = [
-  { id: 1, name: 'ES6', credit: 60 },
-  { id: 2, name: 'Webpack', credit: 20 },
-  { id: 3, name: 'React', credit: 40 },
-]
+const logError = (error) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.error(error)
+  }
+}
+
+const withLatestNotification = (notification) =>
+  notification.html && !notification.html.__html
+    ? { ...notification, html: { __html: getLatestNotification() } }
+    : notification
 
 function App() {
   const [displayDrawer, setDisplayDrawer] = useState(true)
   const [user, setUser] = useState(defaultUser)
-  const [notifications, setNotifications] = useState(notificationsList)
+  const [notifications, setNotifications] = useState([])
+  const [courses, setCourses] = useState([])
+
+  useEffect(() => {
+    let isCancelled = false
+
+    const fetchNotifications = async () => {
+      try {
+        const { data } = await axios.get(NOTIFICATIONS_URL)
+        if (!isCancelled && Array.isArray(data?.notifications)) {
+          setNotifications(data.notifications.map(withLatestNotification))
+        }
+      } catch (error) {
+        logError(error)
+      }
+    }
+
+    fetchNotifications()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!user.isLoggedIn) return undefined
+
+    let isCancelled = false
+
+    const fetchCourses = async () => {
+      try {
+        const { data } = await axios.get(COURSES_URL)
+        if (!isCancelled && Array.isArray(data?.courses)) {
+          setCourses(data.courses)
+        }
+      } catch (error) {
+        logError(error)
+      }
+    }
+
+    fetchCourses()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [user])
 
   const handleDisplayDrawer = useCallback(() => {
     setDisplayDrawer(true)
@@ -69,7 +118,7 @@ function App() {
         <div className="App-body pt-[38px]">
           {user.isLoggedIn ? (
             <BodySectionWithMarginBottom title="Course list">
-              <CourseList courses={coursesList} />
+              <CourseList courses={courses} />
             </BodySectionWithMarginBottom>
           ) : (
             <BodySectionWithMarginBottom title="Log in to continue">
