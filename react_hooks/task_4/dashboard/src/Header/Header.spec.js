@@ -56,6 +56,7 @@ describe('Header', () => {
 
       expect(section).toBeInTheDocument()
       expect(section).toHaveTextContent(/welcome user@example\.com/i)
+      expect(screen.getByText(/welcome user@example\.com/i)).toBe(section)
       expect(screen.getByText(/^logout$/i)).toBeInTheDocument()
     })
 

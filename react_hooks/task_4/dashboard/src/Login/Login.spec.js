@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Login from './Login'
 
@@ -101,6 +101,24 @@ describe('Login', () => {
   })
 
   describe('the logIn prop', () => {
+    test('receives the current credentials on a direct form submission', () => {
+      const logIn = jest.fn()
+      const { container } = render(<Login logIn={logIn} />)
+
+      fireEvent.change(screen.getByLabelText(/email/i), {
+        target: { value: 'user@example.com' },
+      })
+      fireEvent.change(screen.getByLabelText(/password/i), {
+        target: { value: 'short' },
+      })
+      expect(screen.getByRole('button', { name: /^ok$/i })).toBeDisabled()
+
+      expect(fireEvent.submit(container.querySelector('form'))).toBe(false)
+
+      expect(logIn).toHaveBeenCalledTimes(1)
+      expect(logIn).toHaveBeenCalledWith('user@example.com', 'short')
+    })
+
     test('is called with the email and password when the form is submitted', async () => {
       const user = userEvent.setup()
       const logIn = jest.fn()

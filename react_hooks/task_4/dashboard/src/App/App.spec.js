@@ -468,6 +468,45 @@ describe('App', () => {
     expect(container.querySelectorAll('.notification-items li')).toHaveLength(2)
   })
 
+  test.each(['secret-password', 'short'])(
+    'preserves notifications across direct form submissions with password %s',
+    async (password) => {
+      const notificationsSpy = jest.spyOn(Notifications, 'type')
+      const { container } = await renderApp()
+      fireEvent.click(screen.getByText('New course available'))
+      const remainingNotifications = notificationsSpy.mock.lastCall[0].notifications
+      const renderCount = notificationsSpy.mock.calls.length
+
+      for (let cycle = 0; cycle < 2; cycle += 1) {
+        fireEvent.change(screen.getByLabelText(/email/i), {
+          target: { value: 'user@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText(/password/i), {
+          target: { value: password },
+        })
+        fireEvent.submit(container.querySelector('form'))
+
+        expect(screen.getByRole('heading', { name: 'Course list' })).toBeInTheDocument()
+        expect(screen.getByText(/welcome user@example\.com/i)).toBeInTheDocument()
+        expect(screen.queryByText('New course available')).not.toBeInTheDocument()
+        await respondWithCourses()
+        expect(screen.getByText('ES6')).toBeInTheDocument()
+
+        fireEvent.click(screen.getByText(/^logout$/i))
+
+        expect(screen.getByLabelText(/email/i)).toHaveValue('')
+        expect(screen.queryByText(/welcome user@example\.com/i)).not.toBeInTheDocument()
+        expect(container.querySelectorAll('.notification-items li')).toHaveLength(2)
+        expect(screen.getByText('New resume available')).toBeInTheDocument()
+        expect(screen.getByText(/urgent requirement/i)).toBeInTheDocument()
+        expect(notificationsSpy.mock.lastCall[0].notifications).toBe(remainingNotifications)
+        expect(notificationsSpy).toHaveBeenCalledTimes(renderCount)
+      }
+
+      expect(requestsTo(NOTIFICATIONS_URL)).toHaveLength(1)
+    }
+  )
+
   test('renders the fetched notifications, including the latest markup', async () => {
     const { container } = await renderApp()
     const items = container.querySelectorAll('.notification-items li')
