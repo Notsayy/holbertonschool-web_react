@@ -226,6 +226,24 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
+  test('toggles the empty drawer before the notifications response arrives', async () => {
+    render(<App />)
+
+    expect(screen.getByText('No new notifications for now')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Your notifications'))
+    expect(screen.queryByText('No new notifications for now')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText('Your notifications'))
+    expect(screen.getByText('No new notifications for now')).toBeInTheDocument()
+
+    await respondWithNotifications([])
+
+    fireEvent.click(screen.getByText('Your notifications'))
+    expect(screen.queryByText('No new notifications for now')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText('Your notifications'))
+    expect(screen.getByText('No new notifications for now')).toBeInTheDocument()
+    expect(requestsTo(NOTIFICATIONS_URL)).toHaveLength(1)
+  })
+
   describe('marking a notification as read', () => {
     test('removes the clicked item from the list and logs its id', async () => {
       const { container } = await renderApp()
@@ -265,7 +283,7 @@ describe('App', () => {
       }
 
       expect(
-        screen.getByText(/no new notification for now/i)
+        screen.getByText(/no new notifications for now/i)
       ).toBeInTheDocument()
     })
   })
@@ -748,7 +766,7 @@ describe('App', () => {
     test('shows no notification until the response arrives', async () => {
       const { container } = render(<App />)
 
-      expect(screen.getByText(/no new notification for now/i)).toBeInTheDocument()
+      expect(screen.getByText(/no new notifications for now/i)).toBeInTheDocument()
       expect(container.querySelectorAll('.notification-items li')).toHaveLength(0)
 
       await respondWithNotifications()
@@ -954,7 +972,7 @@ describe('App', () => {
 
       await failNextRequest()
 
-      expect(screen.getByText(/no new notification for now/i)).toBeInTheDocument()
+      expect(screen.getByText(/no new notifications for now/i)).toBeInTheDocument()
       expect(container.querySelector('#CourseList')).not.toBeInTheDocument()
       expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
     })

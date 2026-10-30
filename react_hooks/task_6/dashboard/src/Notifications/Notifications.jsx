@@ -69,7 +69,7 @@ function Notifications({
               </ul>
             </>
           ) : (
-            <p className="max-[912px]:text-[20px]">No new notification for now</p>
+            <p className="max-[912px]:text-[20px]">No new notifications for now</p>
           )}
         </div>
       )}
