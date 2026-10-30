@@ -2,9 +2,6 @@ import { fireEvent, render } from '@testing-library/react'
 import NotificationItem from './NotificationItem'
 
 describe('NotificationItem', () => {
-
-
-
   test('renders a li with data-notification-type default', () => {
     const { container } = render(
       <NotificationItem type="default" value="New course available" />
@@ -65,7 +62,6 @@ describe('NotificationItem', () => {
       />
     )
 
-
     expect(markAsRead).not.toHaveBeenCalled()
 
     fireEvent.click(container.querySelector('li'))
@@ -82,11 +78,7 @@ describe('NotificationItem', () => {
 
   test('does not re-render when it is given the same props again', () => {
     const markAsRead = jest.fn()
-
-
     const renderSpy = jest.spyOn(NotificationItem, 'type')
-
-
     const props = {
       id: 1,
       type: 'default',
@@ -98,7 +90,6 @@ describe('NotificationItem', () => {
     rerender(<NotificationItem {...props} />)
 
     expect(renderSpy).toHaveBeenCalledTimes(1)
-
 
     rerender(
       <NotificationItem

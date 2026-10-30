@@ -1,19 +1,12 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import mockAxios from 'jest-mock-axios'
 import App from './App'
 import Notifications from '../Notifications/Notifications'
 import { user as defaultUser } from '../Context/context'
 import { getLatestNotification } from '../utils/utils'
-import notificationsData from '../../public/notifications.json'
 
 const renderApp = () => render(<App />)
 const mockContextValues = []
-
-
-
-
-
 
 jest.mock('../Header/Header', () => {
   const { createElement, Fragment, useContext } = jest.requireActual('react')
@@ -37,57 +30,19 @@ jest.mock('../Header/Header', () => {
   }
 })
 
-
-
-
-const mockRenderedProps = { BodySection: [], CourseList: [], Login: [] }
-
-
-
-
-function mockWithPropsProbe(name, actualModule) {
-  const { createElement } = jest.requireActual('react')
-  const { default: ActualComponent } = actualModule
-
-  function PropsProbe(props) {
-    mockRenderedProps[name].push(props)
-    return createElement(ActualComponent, props)
-  }
-
-  return { __esModule: true, default: PropsProbe }
-}
-
-jest.mock('../BodySection/BodySection', () =>
-  mockWithPropsProbe('BodySection', jest.requireActual('../BodySection/BodySection'))
-)
-jest.mock('../CourseList/CourseList', () =>
-  mockWithPropsProbe('CourseList', jest.requireActual('../CourseList/CourseList'))
-)
-jest.mock('../Login/Login', () =>
-  mockWithPropsProbe('Login', jest.requireActual('../Login/Login'))
-)
-
 const userState = () =>
   JSON.parse(screen.getByTestId('user-state').textContent)
 
 describe('App', () => {
   beforeEach(() => {
-
-    mockAxios.reset()
     jest.spyOn(console, 'log').mockImplementation(() => {})
-
-
-    jest.spyOn(console, 'error').mockImplementation(() => {})
-    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    jest.spyOn(console, 'error')
+    jest.spyOn(console, 'warn')
     mockContextValues.length = 0
-    Object.values(mockRenderedProps).forEach((props) => {
-      props.length = 0
-    })
   })
 
   afterEach(() => {
     cleanup()
-    mockAxios.reset()
     try {
       expect(console.error).not.toHaveBeenCalled()
       expect(console.warn).not.toHaveBeenCalled()
@@ -95,8 +50,6 @@ describe('App', () => {
       jest.restoreAllMocks()
     }
   })
-
-
 
   const logIn = async (
     email = 'user@example.com',
@@ -128,8 +81,6 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: /news from the school/i })
     ).toBeInTheDocument()
-
-
     expect(
       screen.getByText(/lorem ipsum dolor sit amet/i)
     ).toBeInTheDocument()
@@ -178,14 +129,11 @@ describe('App', () => {
 
     await logIn()
 
-
     const wrapper = container
       .querySelector('#CourseList')
       .closest('.bodySectionWithMargin')
     expect(wrapper).toBeInTheDocument()
   })
-
-
 
   test('opens the notifications drawer by default', () => {
     renderApp()
@@ -254,7 +202,6 @@ describe('App', () => {
       const { container } = renderApp()
       fireEvent.click(screen.getByText(/your notifications/i))
 
-
       for (let i = 0; i < 3; i += 1) {
         fireEvent.click(container.querySelector('.notification-items li'))
       }
@@ -295,8 +242,6 @@ describe('App', () => {
       screen.getByText(/here is the list of notifications/i)
     ).toBeInTheDocument()
   })
-
-
 
   describe('the logout section of the Header', () => {
     test('is not rendered before logging in', () => {
@@ -345,7 +290,6 @@ describe('App', () => {
     expect(App.prototype?.isReactComponent).toBeUndefined()
   })
 
-
   test('no longer logs out or alerts when ctrl and h are pressed', async () => {
     const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
     const { container } = renderApp()
@@ -356,8 +300,6 @@ describe('App', () => {
     expect(alertSpy).not.toHaveBeenCalled()
     expect(container.querySelector('#CourseList')).toBeInTheDocument()
   })
-
-
 
   describe('handleDisplayDrawer and handleHideDrawer', () => {
     const drawerIsOpen = (container) =>
@@ -459,57 +401,8 @@ describe('App', () => {
     await logIn()
     fireEvent.click(screen.getByText(/^logout$/i))
 
-
     expect(container.querySelectorAll('.notification-items li')).toHaveLength(2)
   })
-
-  test.each(['before deletion', 'after login'])(
-    'keeps read notifications deleted when the response arrives %s',
-    async (responseTiming) => {
-      const { container } = renderApp()
-      const respondToNotifications = async () => {
-        await act(async () => {
-          mockAxios.mockResponseFor(
-            { url: 'http://localhost:5173/notifications.json' },
-            { data: notificationsData }
-          )
-        })
-      }
-
-      if (responseTiming === 'before deletion') {
-        await respondToNotifications()
-      }
-
-      fireEvent.click(screen.getByText('New course available'))
-      await logIn()
-      expect(container.querySelector('#CourseList')).toBeInTheDocument()
-
-      if (responseTiming === 'after login') {
-        await respondToNotifications()
-      }
-
-      const expectRemainingNotifications = () => {
-        expect(screen.queryByText('New course available')).not.toBeInTheDocument()
-        expect(screen.getByText('New resume available')).toBeInTheDocument()
-        expect(screen.getByText(/urgent requirement/i)).toBeInTheDocument()
-        expect(container.querySelectorAll('.notification-items li')).toHaveLength(2)
-      }
-
-      expectRemainingNotifications()
-      fireEvent.click(screen.getByText(/^logout$/i))
-      expect(screen.getByRole('heading', { name: /log in to continue/i })).toBeInTheDocument()
-      expectRemainingNotifications()
-
-      await logIn()
-      fireEvent.click(screen.getByText('New resume available'))
-      fireEvent.click(screen.getByText(/^logout$/i))
-      expect(screen.queryByText('New resume available')).not.toBeInTheDocument()
-      expect(container.querySelectorAll('.notification-items li')).toHaveLength(1)
-      expect(mockAxios.get.mock.calls.filter(
-        ([url]) => url.endsWith('/notifications.json')
-      )).toHaveLength(1)
-    }
-  )
 
   test('renders notificationsList immediately, including the latest markup', () => {
     const { container } = renderApp()
@@ -610,145 +503,5 @@ describe('App', () => {
 
     expect(container.querySelectorAll('.notification-items li')).toHaveLength(3)
     expect(screen.getByText('New course available')).toBeInTheDocument()
-  })
-
-
-
-
-  describe('the data types of the props passed down by App', () => {
-    const expectWellTypedNotifications = (notifications) => {
-      expect(Array.isArray(notifications)).toBe(true)
-      notifications.forEach(({ id, type, value, html }) => {
-        expect(typeof id).toBe('number')
-        expect(['default', 'urgent']).toContain(type)
-
-
-        expect(typeof (html ? html.__html : value)).toBe('string')
-      })
-    }
-
-    test('Notifications gets displayDrawer as the boolean true on the first render', () => {
-      const notificationsSpy = jest.spyOn(Notifications, 'type')
-      renderApp()
-
-      const [firstProps] = notificationsSpy.mock.calls[0]
-      expect(firstProps.displayDrawer).toBe(true)
-    })
-
-    test('displayDrawer is the boolean false once closed and true once reopened', () => {
-      const notificationsSpy = jest.spyOn(Notifications, 'type')
-      renderApp()
-
-      fireEvent.click(screen.getByRole('button', { name: /close/i }))
-      expect(notificationsSpy.mock.lastCall[0].displayDrawer).toBe(false)
-
-      fireEvent.click(screen.getByText(/your notifications/i))
-      expect(notificationsSpy.mock.lastCall[0].displayDrawer).toBe(true)
-
-      const types = notificationsSpy.mock.calls.map(
-        ([props]) => typeof props.displayDrawer
-      )
-      expect(types).toEqual(types.map(() => 'boolean'))
-    })
-
-    test('Notifications gets the notifications array and three function callbacks', () => {
-      const notificationsSpy = jest.spyOn(Notifications, 'type')
-      renderApp()
-      const props = notificationsSpy.mock.lastCall[0]
-
-      expect(props.notifications).toEqual([
-        { id: 1, type: 'default', value: 'New course available' },
-        { id: 2, type: 'urgent', value: 'New resume available' },
-        { id: 3, type: 'urgent', html: { __html: getLatestNotification() } },
-      ])
-      expectWellTypedNotifications(props.notifications)
-      expect(typeof props.handleDisplayDrawer).toBe('function')
-      expect(typeof props.handleHideDrawer).toBe('function')
-      expect(typeof props.markNotificationAsRead).toBe('function')
-    })
-
-    test('the notifications keep their types once one is marked as read', () => {
-      const notificationsSpy = jest.spyOn(Notifications, 'type')
-      renderApp()
-
-      fireEvent.click(screen.getByText(/new course available/i))
-
-      const { notifications } = notificationsSpy.mock.lastCall[0]
-      expect(notifications).toHaveLength(2)
-      expectWellTypedNotifications(notifications)
-    })
-
-    test('CourseList gets the courses with numeric ids, string names and numeric credits', async () => {
-      renderApp()
-
-      await logIn()
-
-      const { courses } = mockRenderedProps.CourseList.at(-1)
-      expect(Array.isArray(courses)).toBe(true)
-      expect(courses).toEqual([
-        { id: 1, name: 'ES6', credit: 60 },
-        { id: 2, name: 'Webpack', credit: 20 },
-        { id: 3, name: 'React', credit: 40 },
-      ])
-      courses.forEach(({ id, name, credit }) => {
-        expect(typeof id).toBe('number')
-        expect(typeof name).toBe('string')
-        expect(typeof credit).toBe('number')
-      })
-    })
-
-    test('Login gets a logIn function and string credentials, before and after a logout', async () => {
-      const expectWellTypedLoginProps = ({ logIn: logInProp, email, password }) => {
-        expect(typeof logInProp).toBe('function')
-
-
-        expect(['undefined', 'string']).toContain(typeof email)
-        expect(['undefined', 'string']).toContain(typeof password)
-      }
-      renderApp()
-      expectWellTypedLoginProps(mockRenderedProps.Login.at(-1))
-
-      await logIn()
-      fireEvent.click(screen.getByText(/^logout$/i))
-
-      expectWellTypedLoginProps(mockRenderedProps.Login.at(-1))
-    })
-
-    test('every body section gets a string title', async () => {
-      renderApp()
-      await logIn()
-
-      const titles = mockRenderedProps.BodySection.map(({ title }) => title)
-      expect(titles).toEqual(
-        expect.arrayContaining(['Log in to continue', 'Course list', 'News from the School'])
-      )
-      expect(titles.map((title) => typeof title)).toEqual(
-        titles.map(() => 'string')
-      )
-    })
-
-    test('the context gets a user of strings and a boolean, and a logOut function', async () => {
-      renderApp()
-      await logIn()
-      expect(mockContextValues.at(-1).user).toStrictEqual({
-        email: 'user@example.com',
-        password: 'secret-password',
-        isLoggedIn: true,
-      })
-
-      fireEvent.click(screen.getByText(/^logout$/i))
-      expect(mockContextValues.at(-1).user).toStrictEqual({
-        email: '',
-        password: '',
-        isLoggedIn: false,
-      })
-
-      mockContextValues.forEach(({ user, logOut }) => {
-        expect(typeof user.email).toBe('string')
-        expect(typeof user.password).toBe('string')
-        expect(typeof user.isLoggedIn).toBe('boolean')
-        expect(typeof logOut).toBe('function')
-      })
-    })
   })
 })

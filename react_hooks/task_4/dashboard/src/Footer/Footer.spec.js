@@ -3,7 +3,6 @@ import Footer from './Footer'
 import newContext from '../Context/context'
 import { getFooterCopy } from '../utils/utils'
 
-
 const ContextProvider = newContext.Provider
 
 const renderWithUser = (user) =>
@@ -20,14 +19,9 @@ describe('Footer', () => {
 
   test('renders a p element with the copyright, the current year and the dashboard copy', () => {
     const { container } = render(<Footer />)
-
     const paragraph = container.querySelector('p')
 
     expect(paragraph).toBeInTheDocument()
-
-
-
-
     expect(paragraph.textContent.trim()).toMatch(
       /^copyright\s+\d{4}\s*-\s*holberton school main dashboard$/i
     )

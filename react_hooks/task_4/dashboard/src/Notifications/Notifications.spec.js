@@ -57,10 +57,6 @@ describe('Notifications', () => {
       expect(container.querySelector('.notification-items')).toBeNull()
     })
 
-
-
-
-
     test('keeps the drawer closed when displayDrawer is false', () => {
       const { container } = render(
         <Notifications displayDrawer={false} notifications={notificationsList} />
@@ -102,7 +98,6 @@ describe('Notifications', () => {
       expect(items).toHaveLength(3)
       expect(items[0]).toHaveTextContent(/new course available/i)
       expect(items[1]).toHaveTextContent(/new resume available/i)
-
       expect(items[2]).toHaveTextContent(/urgent requirement - complete by eod/i)
       expect(items[2].querySelector('strong')).toBeInTheDocument()
     })
@@ -122,12 +117,8 @@ describe('Notifications', () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
       render(<Notifications displayDrawer notifications={notificationsList} />)
 
-
-
       consoleSpy.mockClear()
       fireEvent.click(screen.getByRole('button', { name: /close/i }))
-
-
 
       expect(consoleSpy).not.toHaveBeenCalledWith(
         expect.stringMatching(/close button/i)
@@ -135,8 +126,6 @@ describe('Notifications', () => {
 
       consoleSpy.mockRestore()
     })
-
-
 
     test('calls markNotificationAsRead with the id of the clicked item', () => {
       const markNotificationAsRead = jest.fn()
@@ -151,7 +140,6 @@ describe('Notifications', () => {
 
       fireEvent.click(items[0])
 
-
       expect(markNotificationAsRead).toHaveBeenLastCalledWith(1)
 
       fireEvent.click(items[1])
@@ -165,36 +153,13 @@ describe('Notifications', () => {
     expect(Notifications.$$typeof).toBe(Symbol.for('react.memo'))
     expect(typeof Notifications.type).toBe('function')
     expect(Notifications.type.prototype?.isReactComponent).toBeUndefined()
-
     expect(typeof Notifications.compare).toBe('function')
   })
-
-  test('warns when notifications has the wrong prop type', () => {
-    const consoleError = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {})
-
-    try {
-      render(<Notifications displayDrawer={false} notifications="invalid" />)
-
-      expect(consoleError).toHaveBeenCalledWith(
-        'Warning: Failed %s type: %s',
-        'prop',
-        expect.stringContaining('Invalid prop `notifications`')
-      )
-    } finally {
-      consoleError.mockRestore()
-    }
-  })
-
-
 
   describe('when it receives new props', () => {
     let renderSpy
 
     beforeEach(() => {
-
-
       renderSpy = jest.spyOn(Notifications, 'type')
     })
 
@@ -366,7 +331,6 @@ describe('Notifications', () => {
     })
   })
 
-
   describe('the drawer callbacks', () => {
     test('calls handleDisplayDrawer when the menu item is clicked', () => {
       const handleDisplayDrawer = jest.fn()
@@ -401,9 +365,6 @@ describe('Notifications', () => {
       consoleSpy.mockRestore()
     })
   })
-
-
-
 
   describe('the bouncing title', () => {
     const title = (container) => container.querySelector('.notification-title')

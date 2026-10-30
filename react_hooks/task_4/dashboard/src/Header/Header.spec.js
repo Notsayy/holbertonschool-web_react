@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import Header from './Header'
 import newContext from '../Context/context'
 
-
 const ContextProvider = newContext.Provider
 
 const loggedInUser = {
@@ -10,7 +9,6 @@ const loggedInUser = {
   password: 'secret-password',
   isLoggedIn: true,
 }
-
 
 const renderLoggedIn = (logOut = () => {}) =>
   render(
@@ -28,8 +26,6 @@ describe('Header', () => {
   test('renders the Holberton logo', () => {
     const { container } = render(<Header />)
     const images = Array.from(container.querySelectorAll('img'))
-
-
 
     const logo = images.find((image) =>
       /holberton/i.test(`${image.getAttribute('alt')} ${image.getAttribute('src')}`)

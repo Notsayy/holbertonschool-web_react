@@ -7,13 +7,11 @@ describe('Login', () => {
     const { container } = render(<Login />)
 
     const labels = Array.from(container.querySelectorAll('label'))
-
     const inputs = Array.from(container.querySelectorAll('input')).filter(
       (input) => !['button', 'reset', 'submit'].includes(input.type)
     )
 
     expect(labels).toHaveLength(2)
-
     expect(labels.some((label) => /email/i.test(label.textContent))).toBe(true)
     expect(labels.some((label) => /password/i.test(label.textContent))).toBe(
       true
@@ -58,17 +56,14 @@ describe('Login', () => {
       const email = screen.getByLabelText(/email/i)
       const password = screen.getByLabelText(/password/i)
 
-
       await user.type(email, 'user@example.com')
       expect(submit()).toBeDisabled()
-
 
       await user.type(password, '1234567')
       expect(submit()).toBeDisabled()
 
       await user.type(password, '8')
       expect(submit()).toBeEnabled()
-
 
       await user.clear(email)
       await user.type(email, 'not-an-email')
@@ -91,8 +86,6 @@ describe('Login', () => {
       const { container } = render(<Login />)
       const form = container.querySelector('form')
       const onSubmit = jest.fn((event) => event.defaultPrevented)
-
-
       document.addEventListener('submit', onSubmit)
 
       await user.type(screen.getByLabelText(/email/i), 'user@example.com')
