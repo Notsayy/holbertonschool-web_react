@@ -4,7 +4,7 @@ import closeIcon from '../assets/close-icon.png';
 import NotificationItem from './NotificationItem';
 
 function Notifications({
-  displayDrawer = false,
+  displayDrawer = true,
   notifications = [],
   handleDisplayDrawer = () => {},
   handleHideDrawer = () => {},
@@ -12,11 +12,6 @@ function Notifications({
 }) {
   const notificationList = notifications || [];
   const isBouncing = notificationList.length > 0 && !displayDrawer;
-
-  const handleClose = () => {
-    console.log('Close button has been clicked');
-    handleHideDrawer();
-  };
 
   return (
     <>
@@ -38,7 +33,7 @@ function Notifications({
               cursor: 'pointer',
             }}
             aria-label="Close"
-            onClick={handleClose}
+            onClick={handleHideDrawer}
           >
             <img src={closeIcon} alt="close icon" width="10px" height="10px" />
           </button>
