@@ -26,7 +26,7 @@ export function appReducer(state = initialState, action) {
         },
       }
     case APP_ACTIONS.LOGOUT:
-      return { ...state, user: { ...initialState.user } }
+      return { ...state, user: { ...initialState.user }, courses: [] }
     case APP_ACTIONS.TOGGLE_DRAWER:
       return {
         ...state,

@@ -18,7 +18,8 @@ change in authentication.
 Actions use a `payload`: credentials for `LOGIN`, a boolean for `TOGGLE_DRAWER`,
 a notification id for `MARK_NOTIFICATION_READ`, and arrays for
 `SET_NOTIFICATIONS` and `SET_COURSES`. `TOGGLE_DRAWER` without a payload inverts
-visibility. `LOGOUT` clears credentials; unknown actions return the same state.
+visibility. `LOGOUT` clears credentials and courses while preserving the
+notifications and drawer visibility; unknown actions return the same state.
 
 The login button is enabled only for a valid email and a password of at least
 eight characters. The hook prevents navigation on every submission and calls

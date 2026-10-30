@@ -482,6 +482,29 @@ describe('App', () => {
     expect(container.querySelectorAll('.notification-items li')).toHaveLength(2)
   })
 
+  test('clears the previous user courses on logout before another user logs in', async () => {
+    await renderApp()
+    await logIn()
+    expect(screen.getByText('ES6')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText(/^logout$/i))
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: 'other@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText(/password/i), {
+      target: { value: '12345678' },
+    })
+    fireEvent.submit(document.querySelector('form'))
+
+    expect(screen.queryByText('ES6')).not.toBeInTheDocument()
+    expect(screen.getByText(/no course available yet/i)).toBeInTheDocument()
+
+    await respondWithCourses([{ id: 7, name: 'Node', credit: 30 }])
+
+    expect(screen.getByText('Node')).toBeInTheDocument()
+    expect(screen.queryByText('ES6')).not.toBeInTheDocument()
+  })
+
   test.each(['secret-password', '12345678'])(
     'preserves notifications across direct form submissions with password %s',
     async (password) => {
@@ -858,11 +881,13 @@ describe('App', () => {
         expect(loggedIn.user).toEqual({ ...payload, isLoggedIn: true })
         expect(loggedOut.user).toEqual(initialState.user)
         expect(loggedOut.user).not.toBe(loggedIn.user)
+        expect(loggedIn.courses).toBe(state.courses)
+        expect(loggedOut.courses).toEqual([])
+        expect(state.courses).toEqual([{ id: 1, name: 'ES6', credit: 60 }])
         expect(state.user.email).toBe('user@example.com')
         for (const nextState of [loggedIn, loggedOut]) {
           expect(nextState).not.toBe(state)
           expect(nextState.notifications).toBe(state.notifications)
-          expect(nextState.courses).toBe(state.courses)
           expect(nextState.displayDrawer).toBe(state.displayDrawer)
         }
       })
