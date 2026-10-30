@@ -35,6 +35,36 @@ jest.mock('../Header/Header', () => {
   }
 })
 
+
+
+
+const mockRenderedProps = { BodySection: [], CourseList: [], Login: [] }
+
+
+
+
+function mockWithPropsProbe(name, actualModule) {
+  const { createElement } = jest.requireActual('react')
+  const { default: ActualComponent } = actualModule
+
+  function PropsProbe(props) {
+    mockRenderedProps[name].push(props)
+    return createElement(ActualComponent, props)
+  }
+
+  return { __esModule: true, default: PropsProbe }
+}
+
+jest.mock('../BodySection/BodySection', () =>
+  mockWithPropsProbe('BodySection', jest.requireActual('../BodySection/BodySection'))
+)
+jest.mock('../CourseList/CourseList', () =>
+  mockWithPropsProbe('CourseList', jest.requireActual('../CourseList/CourseList'))
+)
+jest.mock('../Login/Login', () =>
+  mockWithPropsProbe('Login', jest.requireActual('../Login/Login'))
+)
+
 const userState = () =>
   JSON.parse(screen.getByTestId('user-state').textContent)
 
@@ -42,9 +72,14 @@ describe('App', () => {
   beforeEach(() => {
 
     jest.spyOn(console, 'log').mockImplementation(() => {})
-    jest.spyOn(console, 'error')
-    jest.spyOn(console, 'warn')
+
+
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
     mockContextValues.length = 0
+    Object.values(mockRenderedProps).forEach((props) => {
+      props.length = 0
+    })
   })
 
   afterEach(() => {
@@ -523,5 +558,145 @@ describe('App', () => {
 
     expect(container.querySelectorAll('.notification-items li')).toHaveLength(3)
     expect(screen.getByText('New course available')).toBeInTheDocument()
+  })
+
+
+
+
+  describe('the data types of the props passed down by App', () => {
+    const expectWellTypedNotifications = (notifications) => {
+      expect(Array.isArray(notifications)).toBe(true)
+      notifications.forEach(({ id, type, value, html }) => {
+        expect(typeof id).toBe('number')
+        expect(['default', 'urgent']).toContain(type)
+
+
+        expect(typeof (html ? html.__html : value)).toBe('string')
+      })
+    }
+
+    test('Notifications gets displayDrawer as the boolean true on the first render', () => {
+      const notificationsSpy = jest.spyOn(Notifications, 'type')
+      renderApp()
+
+      const [firstProps] = notificationsSpy.mock.calls[0]
+      expect(firstProps.displayDrawer).toBe(true)
+    })
+
+    test('displayDrawer is the boolean false once closed and true once reopened', () => {
+      const notificationsSpy = jest.spyOn(Notifications, 'type')
+      renderApp()
+
+      fireEvent.click(screen.getByRole('button', { name: /close/i }))
+      expect(notificationsSpy.mock.lastCall[0].displayDrawer).toBe(false)
+
+      fireEvent.click(screen.getByText(/your notifications/i))
+      expect(notificationsSpy.mock.lastCall[0].displayDrawer).toBe(true)
+
+      const types = notificationsSpy.mock.calls.map(
+        ([props]) => typeof props.displayDrawer
+      )
+      expect(types).toEqual(types.map(() => 'boolean'))
+    })
+
+    test('Notifications gets the notifications array and three function callbacks', () => {
+      const notificationsSpy = jest.spyOn(Notifications, 'type')
+      renderApp()
+      const props = notificationsSpy.mock.lastCall[0]
+
+      expect(props.notifications).toEqual([
+        { id: 1, type: 'default', value: 'New course available' },
+        { id: 2, type: 'urgent', value: 'New resume available' },
+        { id: 3, type: 'urgent', html: { __html: getLatestNotification() } },
+      ])
+      expectWellTypedNotifications(props.notifications)
+      expect(typeof props.handleDisplayDrawer).toBe('function')
+      expect(typeof props.handleHideDrawer).toBe('function')
+      expect(typeof props.markNotificationAsRead).toBe('function')
+    })
+
+    test('the notifications keep their types once one is marked as read', () => {
+      const notificationsSpy = jest.spyOn(Notifications, 'type')
+      renderApp()
+
+      fireEvent.click(screen.getByText(/new course available/i))
+
+      const { notifications } = notificationsSpy.mock.lastCall[0]
+      expect(notifications).toHaveLength(2)
+      expectWellTypedNotifications(notifications)
+    })
+
+    test('CourseList gets the courses with numeric ids, string names and numeric credits', async () => {
+      renderApp()
+
+      await logIn()
+
+      const { courses } = mockRenderedProps.CourseList.at(-1)
+      expect(Array.isArray(courses)).toBe(true)
+      expect(courses).toEqual([
+        { id: 1, name: 'ES6', credit: 60 },
+        { id: 2, name: 'Webpack', credit: 20 },
+        { id: 3, name: 'React', credit: 40 },
+      ])
+      courses.forEach(({ id, name, credit }) => {
+        expect(typeof id).toBe('number')
+        expect(typeof name).toBe('string')
+        expect(typeof credit).toBe('number')
+      })
+    })
+
+    test('Login gets a logIn function and string credentials, before and after a logout', async () => {
+      const expectWellTypedLoginProps = ({ logIn: logInProp, email, password }) => {
+        expect(typeof logInProp).toBe('function')
+
+
+        expect(['undefined', 'string']).toContain(typeof email)
+        expect(['undefined', 'string']).toContain(typeof password)
+      }
+      renderApp()
+      expectWellTypedLoginProps(mockRenderedProps.Login.at(-1))
+
+      await logIn()
+      fireEvent.click(screen.getByText(/^logout$/i))
+
+      expectWellTypedLoginProps(mockRenderedProps.Login.at(-1))
+    })
+
+    test('every body section gets a string title', async () => {
+      renderApp()
+      await logIn()
+
+      const titles = mockRenderedProps.BodySection.map(({ title }) => title)
+      expect(titles).toEqual(
+        expect.arrayContaining(['Log in to continue', 'Course list', 'News from the School'])
+      )
+      expect(titles.map((title) => typeof title)).toEqual(
+        titles.map(() => 'string')
+      )
+    })
+
+    test('the context gets a user of strings and a boolean, and a logOut function', async () => {
+      renderApp()
+      await logIn()
+      expect(mockContextValues.at(-1).user).toStrictEqual({
+        email: 'user@example.com',
+        password: 'secret-password',
+        isLoggedIn: true,
+      })
+
+      fireEvent.click(screen.getByText(/^logout$/i))
+      expect(mockContextValues.at(-1).user).toStrictEqual({
+        email: '',
+        password: '',
+        isLoggedIn: false,
+      })
+
+      mockContextValues.forEach(({ user, logOut }) => {
+        expect(typeof user.email).toBe('string')
+        expect(typeof user.password).toBe('string')
+        expect(typeof user.isLoggedIn).toBe('boolean')
+        expect(typeof logOut).toBe('function')
+      })
+    })
   })
 })
