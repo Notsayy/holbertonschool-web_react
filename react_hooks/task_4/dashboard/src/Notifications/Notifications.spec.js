@@ -156,6 +156,24 @@ describe('Notifications', () => {
     expect(typeof Notifications.compare).toBe('function')
   })
 
+  test('warns when notifications has the wrong prop type', () => {
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    try {
+      render(<Notifications displayDrawer={false} notifications="invalid" />)
+
+      expect(consoleError).toHaveBeenCalledWith(
+        'Warning: Failed %s type: %s',
+        'prop',
+        expect.stringContaining('Invalid prop `notifications`')
+      )
+    } finally {
+      consoleError.mockRestore()
+    }
+  })
+
   describe('when it receives new props', () => {
     let renderSpy
 
