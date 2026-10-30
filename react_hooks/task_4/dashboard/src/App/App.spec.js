@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
+import Notifications from '../Notifications/Notifications';
 import { user as defaultUser } from '../Context/context';
 
 const mockContextValues = [];
@@ -35,6 +36,17 @@ const userState = () => JSON.parse(screen.getByTestId('user-state').textContent)
 describe('App component', () => {
   beforeEach(() => {
     mockContextValues.length = 0;
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    try {
+      expect(console.error).not.toHaveBeenCalled();
+      expect(console.warn).not.toHaveBeenCalled();
+    } finally {
+      jest.restoreAllMocks();
+    }
   });
 
   test('renders the dashboard and news section', () => {
@@ -128,6 +140,21 @@ describe('App component', () => {
     expect(container.querySelector('.notification-items')).toBeNull();
     fireEvent.click(screen.getByText(/your notifications/i));
     expect(container.querySelector('.notification-items')).toBeInTheDocument();
+  });
+
+  test('keeps markNotificationAsRead stable between renders', () => {
+    const notificationsSpy = jest.spyOn(Notifications, 'type');
+    try {
+      render(<App />);
+      const initialCallback = notificationsSpy.mock.lastCall[0].markNotificationAsRead;
+
+      fireEvent.click(screen.getByRole('button', { name: /close/i }));
+      fireEvent.click(screen.getByText(/your notifications/i));
+
+      expect(notificationsSpy.mock.lastCall[0].markNotificationAsRead).toBe(initialCallback);
+    } finally {
+      notificationsSpy.mockRestore();
+    }
   });
 
   test('removes a notification immutably when it is marked as read', () => {
