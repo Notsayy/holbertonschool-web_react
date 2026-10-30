@@ -219,7 +219,6 @@ describe('App', () => {
   test('closes the notifications drawer when the close button is clicked', async () => {
     await renderApp()
 
-    fireEvent.click(screen.getByText(/your notifications/i))
     fireEvent.click(screen.getByRole('button', { name: /close/i }))
 
     expect(
@@ -230,7 +229,6 @@ describe('App', () => {
   describe('marking a notification as read', () => {
     test('removes the clicked item from the list and logs its id', async () => {
       const { container } = await renderApp()
-      fireEvent.click(screen.getByText(/your notifications/i))
 
       fireEvent.click(screen.getByText(/new course available/i))
 
@@ -245,7 +243,6 @@ describe('App', () => {
 
     test('removes only the item that was clicked, whatever its position', async () => {
       const { container } = await renderApp()
-      fireEvent.click(screen.getByText(/your notifications/i))
 
       fireEvent.click(screen.getByText(/new resume available/i))
 
@@ -262,7 +259,6 @@ describe('App', () => {
 
     test('shows the empty state once every notification is read', async () => {
       const { container } = await renderApp()
-      fireEvent.click(screen.getByText(/your notifications/i))
 
       for (let i = 0; i < 3; i += 1) {
         fireEvent.click(container.querySelector('.notification-items li'))
@@ -298,6 +294,7 @@ describe('App', () => {
     await renderApp()
 
     await logIn()
+    fireEvent.click(screen.getByRole('button', { name: /close/i }))
     fireEvent.click(screen.getByText(/your notifications/i))
 
     expect(
@@ -385,12 +382,17 @@ describe('App', () => {
       expect(drawerIsOpen(container)).toBe(true)
     })
 
-    test('handleDisplayDrawer keeps an open drawer open', async () => {
+    test('clicking the title toggles the drawer closed and open repeatedly', async () => {
       const { container } = await renderApp()
 
-      fireEvent.click(screen.getByText(/your notifications/i))
-
-      expect(drawerIsOpen(container)).toBe(true)
+      for (let cycle = 0; cycle < 3; cycle += 1) {
+        fireEvent.click(screen.getByText(/your notifications/i))
+        expect(drawerIsOpen(container)).toBe(false)
+        expect(screen.queryByRole('button', { name: /close/i })).not.toBeInTheDocument()
+        fireEvent.click(screen.getByText(/your notifications/i))
+        expect(drawerIsOpen(container)).toBe(true)
+        expect(container.querySelectorAll('.notification-items li')).toHaveLength(3)
+      }
     })
 
     test('can be toggled again and again', async () => {
@@ -892,19 +894,15 @@ describe('App', () => {
         }
       })
 
-      test('toggles visibility and supports explicit open and close actions', () => {
+      test('toggles visibility without mutating unrelated state', () => {
         const state = frozenState()
         const closed = appReducer(state, { type: APP_ACTIONS.TOGGLE_DRAWER })
         const reopened = appReducer(Object.freeze(closed), { type: APP_ACTIONS.TOGGLE_DRAWER })
-        const open = appReducer(state, { type: APP_ACTIONS.TOGGLE_DRAWER, payload: true })
-        const hidden = appReducer(state, { type: APP_ACTIONS.TOGGLE_DRAWER, payload: false })
 
         expect(closed.displayDrawer).toBe(false)
         expect(reopened.displayDrawer).toBe(true)
-        expect(open.displayDrawer).toBe(true)
-        expect(hidden.displayDrawer).toBe(false)
         expect(state.displayDrawer).toBe(true)
-        for (const nextState of [closed, reopened, open, hidden]) {
+        for (const nextState of [closed, reopened]) {
           expect(nextState.user).toBe(state.user)
           expect(nextState.notifications).toBe(state.notifications)
           expect(nextState.courses).toBe(state.courses)

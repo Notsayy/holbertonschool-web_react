@@ -15,10 +15,12 @@ Login and logout preserve dismissed notifications and do not trigger another
 notifications request. Effect cleanup ignores responses after unmount or a
 change in authentication.
 
-Actions use a `payload`: credentials for `LOGIN`, a boolean for `TOGGLE_DRAWER`,
-a notification id for `MARK_NOTIFICATION_READ`, and arrays for
-`SET_NOTIFICATIONS` and `SET_COURSES`. `TOGGLE_DRAWER` without a payload inverts
-visibility. `LOGOUT` clears credentials and courses while preserving the
+Actions use a `payload`: credentials for `LOGIN`, a notification id for
+`MARK_NOTIFICATION_READ`, and arrays for `SET_NOTIFICATIONS` and `SET_COURSES`.
+`TOGGLE_DRAWER` inverts visibility without a payload. Both the notification
+title and close button dispatch this action: clicking the title closes an
+already open drawer and opens a closed drawer.
+`LOGOUT` clears credentials and courses while preserving the
 notifications and drawer visibility; unknown actions return the same state.
 
 The login button is enabled only for a valid email and a password of at least
