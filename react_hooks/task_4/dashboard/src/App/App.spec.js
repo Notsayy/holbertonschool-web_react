@@ -7,6 +7,29 @@ import { getLatestNotification } from '../utils/utils'
 
 const renderApp = () => render(<App />)
 const mockContextValues = []
+const mockRenderedProps = { BodySection: [], CourseList: [], Login: [] }
+
+function mockWithPropsProbe(name, actualModule) {
+  const { createElement } = jest.requireActual('react')
+  const { default: ActualComponent } = actualModule
+
+  function PropsProbe(props) {
+    mockRenderedProps[name].push(props)
+    return createElement(ActualComponent, props)
+  }
+
+  return { __esModule: true, default: PropsProbe }
+}
+
+jest.mock('../BodySection/BodySection', () =>
+  mockWithPropsProbe('BodySection', jest.requireActual('../BodySection/BodySection'))
+)
+jest.mock('../CourseList/CourseList', () =>
+  mockWithPropsProbe('CourseList', jest.requireActual('../CourseList/CourseList'))
+)
+jest.mock('../Login/Login', () =>
+  mockWithPropsProbe('Login', jest.requireActual('../Login/Login'))
+)
 
 jest.mock('../Header/Header', () => {
   const { createElement, Fragment, useContext } = jest.requireActual('react')
@@ -36,9 +59,12 @@ const userState = () =>
 describe('App', () => {
   beforeEach(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {})
-    jest.spyOn(console, 'error')
-    jest.spyOn(console, 'warn')
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
     mockContextValues.length = 0
+    Object.values(mockRenderedProps).forEach((props) => {
+      props.length = 0
+    })
   })
 
   afterEach(() => {
@@ -503,5 +529,91 @@ describe('App', () => {
 
     expect(container.querySelectorAll('.notification-items li')).toHaveLength(3)
     expect(screen.getByText('New course available')).toBeInTheDocument()
+  })
+
+  describe('the data types of props passed down by App', () => {
+    const expectNotificationProps = (props) => {
+      expect(typeof props.displayDrawer).toBe('boolean')
+      expect(typeof props.handleDisplayDrawer).toBe('function')
+      expect(typeof props.handleHideDrawer).toBe('function')
+      expect(typeof props.markNotificationAsRead).toBe('function')
+      expect(Array.isArray(props.notifications)).toBe(true)
+      props.notifications.forEach(({ id, type, value, html }) => {
+        expect(typeof id).toBe('number')
+        expect(['default', 'urgent']).toContain(type)
+        if (html !== undefined) {
+          expect(html).toEqual({ __html: expect.any(String) })
+        } else {
+          expect(typeof value).toBe('string')
+        }
+      })
+    }
+
+    test('passes boolean drawer state, typed notifications and function callbacks', () => {
+      const notificationsSpy = jest.spyOn(Notifications, 'type')
+      renderApp()
+
+      expectNotificationProps(notificationsSpy.mock.lastCall[0])
+      expect(notificationsSpy.mock.lastCall[0].displayDrawer).toBe(true)
+
+      fireEvent.click(screen.getByRole('button', { name: /close/i }))
+      expectNotificationProps(notificationsSpy.mock.lastCall[0])
+      expect(notificationsSpy.mock.lastCall[0].displayDrawer).toBe(false)
+
+      fireEvent.click(screen.getByText(/your notifications/i))
+      fireEvent.click(screen.getByText('New course available'))
+      expectNotificationProps(notificationsSpy.mock.lastCall[0])
+      expect(notificationsSpy.mock.lastCall[0].notifications).toHaveLength(2)
+    })
+
+    test('passes courses with numeric ids and credits rather than numeric strings', async () => {
+      renderApp()
+      await logIn()
+
+      expect(mockRenderedProps.CourseList.length).toBeGreaterThan(0)
+      mockRenderedProps.CourseList.forEach(({ courses }) => {
+        expect(courses).toStrictEqual([
+          { id: 1, name: 'ES6', credit: 60 },
+          { id: 2, name: 'Webpack', credit: 20 },
+          { id: 3, name: 'React', credit: 40 },
+        ])
+      })
+    })
+
+    test('passes string credentials and a login function before and after logout', async () => {
+      renderApp()
+      expect(mockRenderedProps.Login.length).toBeGreaterThan(0)
+      expect(mockRenderedProps.Login.at(-1)).toEqual(expect.objectContaining({
+        email: '',
+        password: '',
+        logIn: expect.any(Function),
+      }))
+
+      await logIn()
+      fireEvent.click(screen.getByText(/^logout$/i))
+
+      mockRenderedProps.Login.forEach(({ email, password, logIn: loginHandler }) => {
+        expect(typeof email).toBe('string')
+        expect(typeof password).toBe('string')
+        expect(typeof loginHandler).toBe('function')
+      })
+    })
+
+    test('passes string section titles and a correctly typed context throughout authentication', async () => {
+      renderApp()
+      await logIn()
+      fireEvent.click(screen.getByText(/^logout$/i))
+
+      expect(mockRenderedProps.BodySection.length).toBeGreaterThan(0)
+      mockRenderedProps.BodySection.forEach(({ title }) => {
+        expect(typeof title).toBe('string')
+      })
+      mockContextValues.forEach(({ user, logOut }) => {
+        expect(typeof user.email).toBe('string')
+        expect(typeof user.password).toBe('string')
+        expect(typeof user.isLoggedIn).toBe('boolean')
+        expect(typeof logOut).toBe('function')
+      })
+    })
   })
 })
