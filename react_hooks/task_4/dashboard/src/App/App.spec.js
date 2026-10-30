@@ -1,9 +1,11 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import mockAxios from 'jest-mock-axios'
 import App from './App'
 import Notifications from '../Notifications/Notifications'
 import { user as defaultUser } from '../Context/context'
 import { getLatestNotification } from '../utils/utils'
+import notificationsData from '../../public/notifications.json'
 
 const renderApp = () => render(<App />)
 const mockContextValues = []
@@ -71,6 +73,7 @@ const userState = () =>
 describe('App', () => {
   beforeEach(() => {
 
+    mockAxios.reset()
     jest.spyOn(console, 'log').mockImplementation(() => {})
 
 
@@ -84,6 +87,7 @@ describe('App', () => {
 
   afterEach(() => {
     cleanup()
+    mockAxios.reset()
     try {
       expect(console.error).not.toHaveBeenCalled()
       expect(console.warn).not.toHaveBeenCalled()
@@ -458,6 +462,54 @@ describe('App', () => {
 
     expect(container.querySelectorAll('.notification-items li')).toHaveLength(2)
   })
+
+  test.each(['before deletion', 'after login'])(
+    'keeps read notifications deleted when the response arrives %s',
+    async (responseTiming) => {
+      const { container } = renderApp()
+      const respondToNotifications = async () => {
+        await act(async () => {
+          mockAxios.mockResponseFor(
+            { url: 'http://localhost:5173/notifications.json' },
+            { data: notificationsData }
+          )
+        })
+      }
+
+      if (responseTiming === 'before deletion') {
+        await respondToNotifications()
+      }
+
+      fireEvent.click(screen.getByText('New course available'))
+      await logIn()
+      expect(container.querySelector('#CourseList')).toBeInTheDocument()
+
+      if (responseTiming === 'after login') {
+        await respondToNotifications()
+      }
+
+      const expectRemainingNotifications = () => {
+        expect(screen.queryByText('New course available')).not.toBeInTheDocument()
+        expect(screen.getByText('New resume available')).toBeInTheDocument()
+        expect(screen.getByText(/urgent requirement/i)).toBeInTheDocument()
+        expect(container.querySelectorAll('.notification-items li')).toHaveLength(2)
+      }
+
+      expectRemainingNotifications()
+      fireEvent.click(screen.getByText(/^logout$/i))
+      expect(screen.getByRole('heading', { name: /log in to continue/i })).toBeInTheDocument()
+      expectRemainingNotifications()
+
+      await logIn()
+      fireEvent.click(screen.getByText('New resume available'))
+      fireEvent.click(screen.getByText(/^logout$/i))
+      expect(screen.queryByText('New resume available')).not.toBeInTheDocument()
+      expect(container.querySelectorAll('.notification-items li')).toHaveLength(1)
+      expect(mockAxios.get.mock.calls.filter(
+        ([url]) => url.endsWith('/notifications.json')
+      )).toHaveLength(1)
+    }
+  )
 
   test('renders notificationsList immediately, including the latest markup', () => {
     const { container } = renderApp()

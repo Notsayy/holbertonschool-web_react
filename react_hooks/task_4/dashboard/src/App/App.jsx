@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
 import Notifications from '../Notifications/Notifications'
 import Header from '../Header/Header'
@@ -35,6 +35,7 @@ function App() {
 
   const [user, setUser] = useState(defaultUser)
   const [notifications, setNotifications] = useState(notificationsList)
+  const readNotificationIds = useRef(new Set())
 
 
 
@@ -49,11 +50,13 @@ function App() {
 
 
         setNotifications(
-          data.notifications.map((notification) =>
-            notification.html && !notification.html.__html
-              ? { ...notification, html: { __html: getLatestNotification() } }
-              : notification
-          )
+          data.notifications
+            .filter((notification) => !readNotificationIds.current.has(notification.id))
+            .map((notification) =>
+              notification.html && !notification.html.__html
+                ? { ...notification, html: { __html: getLatestNotification() } }
+                : notification
+            )
         )
       })
       .catch(() => {})
@@ -104,6 +107,7 @@ function App() {
 
   const markNotificationAsRead = useCallback((id) => {
     console.log(`Notification ${id} has been marked as read`)
+    readNotificationIds.current.add(id)
     setNotifications((prevNotifications) =>
       prevNotifications.filter((notification) => notification.id !== id)
     )
