@@ -1,33 +1,132 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import NotificationItem from './NotificationItem';
+import { fireEvent, render } from '@testing-library/react'
+import NotificationItem from './NotificationItem'
 
-describe('NotificationItem component', () => {
-  test('is memoized to avoid unnecessary re-renders', () => {
-    expect(NotificationItem.$$typeof).toBe(Symbol.for('react.memo'));
-  });
+describe('NotificationItem', () => {
 
-  test('renders NotificationItem component without crashing', () => {
-    render(<NotificationItem />);
-  });
 
-  test('renders correct html with dummy type and value props', () => {
-    render(<NotificationItem type="default" value="test" />);
-    const listItem = screen.getByRole('listitem');
-    expect(listItem).toHaveTextContent('test');
-    expect(listItem).toHaveAttribute('data-notification-type', 'default');
-  });
 
-  test('renders correct html with dummy html prop', () => {
-    render(<NotificationItem html={{ __html: '<u>test</u>' }} />);
-    const listItem = screen.getByRole('listitem');
-    expect(listItem.innerHTML).toBe('<u>test</u>');
-  });
+  test('renders a li with data-notification-type default', () => {
+    const { container } = render(
+      <NotificationItem type="default" value="New course available" />
+    )
+    const item = container.querySelector('li')
 
-  test('calls markAsRead prop when click event is triggered', () => {
-    const markAsReadSpy = jest.fn();
-    render(<NotificationItem id={1} markAsRead={markAsReadSpy} value="test" />);
-    const listItem = screen.getByRole('listitem');
-    fireEvent.click(listItem);
-    expect(markAsReadSpy).toHaveBeenCalledWith(1);
-  });
-});
+    expect(item).toBeInTheDocument()
+    expect(item).toHaveAttribute('data-notification-type', 'default')
+  })
+
+  test('renders a li with data-notification-type urgent', () => {
+    const { container } = render(
+      <NotificationItem type="urgent" value="New resume available" />
+    )
+    const item = container.querySelector('li')
+
+    expect(item).toBeInTheDocument()
+    expect(item).toHaveAttribute('data-notification-type', 'urgent')
+  })
+
+  test('renders the value as text', () => {
+    const { container } = render(
+      <NotificationItem type="default" value="New course available" />
+    )
+
+    expect(container.querySelector('li')).toHaveTextContent(
+      /new course available/i
+    )
+  })
+
+  test('renders the html prop as markup', () => {
+    const { container } = render(
+      <NotificationItem
+        type="urgent"
+        html={{ __html: '<strong>Urgent requirement</strong> - complete by EOD' }}
+      />
+    )
+    const item = container.querySelector('li')
+
+    expect(item.querySelector('strong')).toBeInTheDocument()
+    expect(item).toHaveTextContent(/urgent requirement - complete by eod/i)
+  })
+
+  test('does not crash when no prop is passed', () => {
+    const { container } = render(<NotificationItem />)
+
+    expect(container.querySelector('li')).toBeInTheDocument()
+  })
+
+  test('calls markAsRead with its id when the li is clicked', () => {
+    const markAsRead = jest.fn()
+    const { container } = render(
+      <NotificationItem
+        id={7}
+        type="default"
+        value="New course available"
+        markAsRead={markAsRead}
+      />
+    )
+
+
+    expect(markAsRead).not.toHaveBeenCalled()
+
+    fireEvent.click(container.querySelector('li'))
+
+    expect(markAsRead).toHaveBeenCalledTimes(1)
+    expect(markAsRead).toHaveBeenCalledWith(7)
+  })
+
+  test('is a function component wrapped in memo', () => {
+    expect(NotificationItem.$$typeof).toBe(Symbol.for('react.memo'))
+    expect(typeof NotificationItem.type).toBe('function')
+    expect(NotificationItem.type.prototype?.isReactComponent).toBeUndefined()
+  })
+
+  test('does not re-render when it is given the same props again', () => {
+    const markAsRead = jest.fn()
+
+
+    const renderSpy = jest.spyOn(NotificationItem, 'type')
+
+
+    const props = {
+      id: 1,
+      type: 'default',
+      value: 'New course available',
+      markAsRead,
+    }
+
+    const { rerender } = render(<NotificationItem {...props} />)
+    rerender(<NotificationItem {...props} />)
+
+    expect(renderSpy).toHaveBeenCalledTimes(1)
+
+
+    rerender(
+      <NotificationItem
+        id={1}
+        type="urgent"
+        value="New resume available"
+        markAsRead={markAsRead}
+      />
+    )
+
+    expect(renderSpy).toHaveBeenCalledTimes(2)
+
+    renderSpy.mockRestore()
+  })
+
+  test('calls markAsRead as well when the item holds markup', () => {
+    const markAsRead = jest.fn()
+    const { container } = render(
+      <NotificationItem
+        id={3}
+        type="urgent"
+        html={{ __html: '<strong>Urgent requirement</strong>' }}
+        markAsRead={markAsRead}
+      />
+    )
+
+    fireEvent.click(container.querySelector('li'))
+
+    expect(markAsRead).toHaveBeenCalledWith(3)
+  })
+})

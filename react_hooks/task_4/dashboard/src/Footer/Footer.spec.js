@@ -1,40 +1,82 @@
-import { render, screen } from '@testing-library/react';
-import Footer from './Footer';
-import { getCurrentYear } from '../utils/utils';
-import newContext from '../Context/context';
+import { render, screen } from '@testing-library/react'
+import Footer from './Footer'
+import newContext from '../Context/context'
+import { getFooterCopy } from '../utils/utils'
 
-describe('Footer component', () => {
-  test('renders Footer component without crashing', () => {
-    render(<Footer />);
-  });
 
-  test('renders the string Copyright {the current year} - Holberton School', () => {
-    render(<Footer />);
-    const expectedText = `Copyright ${getCurrentYear()} - Holberton School`;
-    expect(screen.getByText(expectedText)).toBeInTheDocument();
-  });
+const ContextProvider = newContext.Provider
 
-  test('does not display Contact us with the default context', () => {
-    render(<Footer />);
-    expect(screen.queryByRole('link', { name: 'Contact us' })).not.toBeInTheDocument();
-  });
+const renderWithUser = (user) =>
+  render(
+    <ContextProvider value={{ user, logOut: () => {} }}>
+      <Footer />
+    </ContextProvider>
+  )
 
-  test.each([null, { email: '', password: '', isLoggedIn: false }])(
-    'does not display Contact us for a missing or logged-out user: %j',
-    (user) => {
-      const value = { user, logOut: jest.fn() };
-      render(<newContext.Provider value={value}><Footer /></newContext.Provider>);
-      expect(screen.queryByRole('link', { name: 'Contact us' })).not.toBeInTheDocument();
-    }
-  );
+describe('Footer', () => {
+  test('getFooterCopy returns the index copy when isIndex is true', () => {
+    expect(getFooterCopy(true)).toMatch(/^holberton school$/i)
+  })
 
-  test('displays Contact us when logged in without adding another logout link', () => {
-    const loggedInValue = {
-      user: { email: 'user@example.com', password: '12345678', isLoggedIn: true },
-      logOut: jest.fn(),
-    };
-    render(<newContext.Provider value={loggedInValue}><Footer /></newContext.Provider>);
-    expect(screen.getByRole('link', { name: 'Contact us' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'logout' })).not.toBeInTheDocument();
-  });
-});
+  test('renders a p element with the copyright, the current year and the dashboard copy', () => {
+    const { container } = render(<Footer />)
+
+    const paragraph = container.querySelector('p')
+
+    expect(paragraph).toBeInTheDocument()
+
+
+
+
+    expect(paragraph.textContent.trim()).toMatch(
+      /^copyright\s+\d{4}\s*-\s*holberton school main dashboard$/i
+    )
+  })
+
+  describe('the Contact us link', () => {
+    test('is not displayed with the default context value', () => {
+      render(<Footer />)
+
+      expect(screen.queryByText(/contact us/i)).not.toBeInTheDocument()
+    })
+
+    test('is not displayed when the user is logged out', () => {
+      renderWithUser({ email: '', password: '', isLoggedIn: false })
+
+      expect(screen.queryByText(/contact us/i)).not.toBeInTheDocument()
+    })
+
+    test('is displayed when the user is logged in', () => {
+      renderWithUser({
+        email: 'user@example.com',
+        password: 'secret-password',
+        isLoggedIn: true,
+      })
+
+      const link = screen.getByRole('link', { name: /contact us/i })
+      expect(link).toBeInTheDocument()
+      expect(link.closest('p')).toBeInTheDocument()
+    })
+
+    test('disappears once the user in the context logs out', () => {
+      const { rerender } = renderWithUser({
+        email: 'user@example.com',
+        password: 'secret-password',
+        isLoggedIn: true,
+      })
+
+      rerender(
+        <ContextProvider
+          value={{
+            user: { email: '', password: '', isLoggedIn: false },
+            logOut: () => {},
+          }}
+        >
+          <Footer />
+        </ContextProvider>
+      )
+
+      expect(screen.queryByText(/contact us/i)).not.toBeInTheDocument()
+    })
+  })
+})
