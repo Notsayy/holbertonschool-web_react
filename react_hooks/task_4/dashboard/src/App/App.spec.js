@@ -144,16 +144,17 @@ describe('App component', () => {
     expect(container.querySelector('.notification-items')).toBeInTheDocument();
   });
 
-  test('keeps markNotificationAsRead stable between renders', () => {
+  test('keeps markNotificationAsRead stable when notifications are removed', () => {
     const notificationsSpy = jest.spyOn(Notifications, 'type');
     try {
-      render(<App />);
+      const { container } = render(<App />);
       const initialCallback = notificationsSpy.mock.lastCall[0].markNotificationAsRead;
 
-      fireEvent.click(screen.getByRole('button', { name: /close/i }));
-      fireEvent.click(screen.getByText(/your notifications/i));
+      fireEvent.click(screen.getByText('New course available'));
 
       expect(notificationsSpy.mock.lastCall[0].markNotificationAsRead).toBe(initialCallback);
+      expect(container.querySelectorAll('.notification-items li')).toHaveLength(2);
+      expect(screen.queryByText('New course available')).not.toBeInTheDocument();
     } finally {
       notificationsSpy.mockRestore();
     }
