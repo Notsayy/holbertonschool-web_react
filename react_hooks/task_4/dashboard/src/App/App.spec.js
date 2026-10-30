@@ -76,6 +76,8 @@ describe('App component', () => {
       'Welcome user@example.com (logout)'
     );
     expect(container.querySelector('#CourseList')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Contact us' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'logout' })).toHaveLength(1);
     expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
   });
 

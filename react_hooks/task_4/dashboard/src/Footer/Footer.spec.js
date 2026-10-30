@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import Footer from './Footer';
 import { getCurrentYear } from '../utils/utils';
 import newContext from '../Context/context';
@@ -14,28 +14,27 @@ describe('Footer component', () => {
     expect(screen.getByText(expectedText)).toBeInTheDocument();
   });
 
-  test('does not display a welcome message with the default context', () => {
+  test('does not display Contact us with the default context', () => {
     render(<Footer />);
-    expect(screen.queryByRole('link', { name: 'logout' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Contact us' })).not.toBeInTheDocument();
   });
 
   test.each([null, { email: '', password: '', isLoggedIn: false }])(
-    'does not display a welcome message for a missing or logged-out user: %j',
+    'does not display Contact us for a missing or logged-out user: %j',
     (user) => {
       const value = { user, logOut: jest.fn() };
       render(<newContext.Provider value={value}><Footer /></newContext.Provider>);
-      expect(screen.queryByRole('link', { name: 'logout' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Contact us' })).not.toBeInTheDocument();
     }
   );
 
-  test('displays a welcome message when logged in and calls logout', () => {
+  test('displays Contact us when logged in without adding another logout link', () => {
     const loggedInValue = {
       user: { email: 'user@example.com', password: '12345678', isLoggedIn: true },
       logOut: jest.fn(),
     };
     render(<newContext.Provider value={loggedInValue}><Footer /></newContext.Provider>);
-    expect(screen.getByText('user@example.com').closest('p')).toHaveTextContent('Welcome');
-    fireEvent.click(screen.getByRole('link', { name: 'logout' }));
-    expect(loggedInValue.logOut).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('link', { name: 'Contact us' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'logout' })).not.toBeInTheDocument();
   });
 });
