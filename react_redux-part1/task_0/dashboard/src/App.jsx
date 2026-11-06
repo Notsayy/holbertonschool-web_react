@@ -1,105 +1,146 @@
-import PropTypes from 'prop-types';
-import { Component, Fragment } from 'react';
+/* global process */
+import { createElement, useCallback, useEffect, useReducer } from 'react';
+import axios from 'axios';
 import Notifications from './components/Notifications/Notifications';
 import Header from './components/Header/Header';
 import Login from './pages/Login/Login';
-import Footer from './components/Footer/Footer';
 import CourseList from './pages/CourseList/CourseList';
+import Footer from './components/Footer/Footer';
 import BodySection from './components/BodySection/BodySection';
 import BodySectionWithMarginBottom from './components/BodySectionWithMarginBottom/BodySectionWithMarginBottom';
+import appReducer, { APP_ACTIONS, initialState } from './appReducer';
 import { getLatestNotification } from './utils/utils';
 
-const notificationsList = [
-  { id: 1, type: 'default', value: 'New course available' },
-  { id: 2, type: 'urgent', value: 'New resume available' },
-  { id: 3, type: 'urgent', value: { __html: getLatestNotification() } },
-];
+const NOTIFICATIONS_URL = 'http://localhost:5173/notifications.json';
+const COURSES_URL = 'http://localhost:5173/courses.json';
 
-const coursesList = [
-  { id: 1, name: 'ES6', credit: 60 },
-  { id: 2, name: 'Webpack', credit: 20 },
-  { id: 3, name: 'React', credit: 40 },
-];
+const logError = (error) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.error(error);
+  }
+};
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      displayDrawer: false,
+const withLatestNotification = (notification) =>
+  notification.html && !notification.html.__html
+    ? { ...notification, html: { __html: getLatestNotification() } }
+    : notification;
+
+function App() {
+  const [state, dispatch] = useReducer(appReducer, initialState);
+  const { displayDrawer, user, notifications, courses } = state;
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const fetchNotifications = async () => {
+      try {
+        const { data } = await axios.get(NOTIFICATIONS_URL);
+        if (!isCancelled && Array.isArray(data?.notifications)) {
+          dispatch({
+            type: APP_ACTIONS.SET_NOTIFICATIONS,
+            payload: data.notifications.map(withLatestNotification),
+          });
+        }
+      } catch (error) {
+        logError(error);
+      }
     };
-    this.handleKeyDown = this.handleKeyDown.bind(this);
-    this.handleDisplayDrawer = this.handleDisplayDrawer.bind(this);
-    this.handleHideDrawer = this.handleHideDrawer.bind(this);
-  }
 
-  handleDisplayDrawer() {
-    this.setState({ displayDrawer: true });
-  }
+    fetchNotifications();
 
-  handleHideDrawer() {
-    this.setState({ displayDrawer: false });
-  }
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
-  componentDidMount() {
-    document.addEventListener('keydown', this.handleKeyDown);
-  }
+  useEffect(() => {
+    if (!user.isLoggedIn) return undefined;
 
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.handleKeyDown);
-  }
+    let isCancelled = false;
 
-  handleKeyDown(event) {
-    if (event.ctrlKey && (event.key === 'h' || event.key === 'H')) {
-      alert('Logging you out');
-      this.props.logOut();
-    }
-  }
+    const fetchCourses = async () => {
+      try {
+        const { data } = await axios.get(COURSES_URL);
+        if (!isCancelled && Array.isArray(data?.courses)) {
+          dispatch({ type: APP_ACTIONS.SET_COURSES, payload: data.courses });
+        }
+      } catch (error) {
+        logError(error);
+      }
+    };
 
-  render() {
-    const { isLoggedIn } = this.props;
-    const { displayDrawer } = this.state;
-    return (
-      <Fragment>
-        <div className="root-notifications relative z-10 flex flex-col items-end p-2.5 pb-0 max-[912px]:absolute max-[912px]:top-0 max-[912px]:right-0 max-[912px]:p-0 max-[912px]:pt-1 max-[912px]:pr-5">
-          <Notifications
-            displayDrawer={displayDrawer}
-            handleDisplayDrawer={this.handleDisplayDrawer}
-            handleHideDrawer={this.handleHideDrawer}
-            notifications={notificationsList}
-          />
-        </div>
-        <div className={`App min-h-screen flex flex-col justify-between p-4 sm:p-8 max-[520px]:p-3 max-[520px]:pt-0 ${isLoggedIn ? 'max-[520px]:pb-0 max-[520px]:[&_.App-footer]:text-base max-[520px]:[&_.App-header]:pb-[21px]' : ''}`}>
-          <Header />
-          <div className="flex-1">
-            {isLoggedIn ? (
-              <BodySectionWithMarginBottom title="Course list">
-                <CourseList courses={coursesList} />
-              </BodySectionWithMarginBottom>
-            ) : (
-              <BodySectionWithMarginBottom title="Log in to continue">
-                <Login />
-              </BodySectionWithMarginBottom>
-            )}
-          </div>
-          <BodySection title="News from the School">
-            <p className="max-[520px]:-mt-3 max-[520px]:-mb-5">ipsum Lorem ipsum dolor sit amet consectetur, adipisicing elit. Similique, asperiores architecto blanditiis fuga doloribus sit illum aliquid ea distinctio minus accusantium, impedit quo voluptatibus ut magni dicta. Recusandae, quia dicta?</p>
-          </BodySection>
-          <Footer />
-        </div>
-      </Fragment>
-    );
-  }
+    fetchCourses();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user]);
+
+  const handleDisplayDrawer = useCallback(() => {
+    dispatch({ type: APP_ACTIONS.TOGGLE_DRAWER });
+  }, []);
+
+  const handleHideDrawer = useCallback(() => {
+    dispatch({ type: APP_ACTIONS.TOGGLE_DRAWER });
+  }, []);
+
+  const logIn = useCallback((email, password) => {
+    dispatch({ type: APP_ACTIONS.LOGIN, payload: { email, password } });
+  }, []);
+
+  const logOut = useCallback(() => {
+    dispatch({ type: APP_ACTIONS.LOGOUT });
+  }, []);
+
+  const markNotificationAsRead = useCallback((id) => {
+    console.log(`Notification ${id} has been marked as read`);
+    dispatch({ type: APP_ACTIONS.MARK_NOTIFICATION_READ, payload: id });
+  }, []);
+
+  return createElement(
+    'div',
+    { className: 'relative flex min-h-screen flex-col px-3' },
+    createElement(
+      'div',
+      { className: 'root-notifications' },
+      createElement(Notifications, {
+        notifications,
+        displayDrawer,
+        handleDisplayDrawer,
+        handleHideDrawer,
+        markNotificationAsRead,
+      })
+    ),
+    createElement(Header, { user, logOut }),
+    createElement(
+      'div',
+      { className: 'App-body pt-[38px]' },
+      user.isLoggedIn
+        ? createElement(
+            BodySectionWithMarginBottom,
+            { title: 'Course list' },
+            createElement(CourseList, { courses })
+          )
+        : createElement(
+            BodySectionWithMarginBottom,
+            { title: 'Log in to continue' },
+            createElement(Login, { logIn, email: user.email, password: user.password })
+          ),
+      createElement(
+        BodySection,
+        { title: 'News from the School' },
+        createElement(
+          'p',
+          null,
+          'ipsum Lorem ipsum dolor sit amet consectetur, adipisicing elit. ' +
+            'Similique, asperiores architecto blanditiis fuga doloribus sit ' +
+            'illum aliquid ea distinctio minus accusantium, impedit quo ' +
+            'voluptatibus ut magni dicta. Recusandae, quia dicta?'
+        )
+      )
+    ),
+    createElement(Footer, { user })
+  );
 }
 
-App.propTypes = {
-  isLoggedIn: PropTypes.bool,
-  logOut: PropTypes.func,
-};
-
-App.defaultProps = {
-  isLoggedIn: false,
-  logOut: () => { },
-};
-
 export default App;
-
