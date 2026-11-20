@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 const NotificationItem = memo(function NotificationItem({
   type,
   html,
-  value,
+  value = '',
   markAsRead,
   id,
 }) {
@@ -48,14 +48,6 @@ NotificationItem.propTypes = {
   }),
   value: PropTypes.string,
   markAsRead: PropTypes.func,
-};
-
-NotificationItem.defaultProps = {
-  id: 0,
-  type: 'default',
-  html: undefined,
-  value: '',
-  markAsRead: () => {},
 };
 
 export default NotificationItem;

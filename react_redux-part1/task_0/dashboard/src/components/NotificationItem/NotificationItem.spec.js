@@ -48,7 +48,17 @@ describe('NotificationItem', () => {
   test('does not crash when no prop is passed', () => {
     const { container } = render(<NotificationItem />);
 
-    expect(container.querySelector('li')).toBeInTheDocument();
+    expect(container.querySelector('li')).toHaveAttribute('data-notification-type', 'default');
+    expect(container.querySelector('li')).toBeEmptyDOMElement();
+  });
+
+  test('uses the default id when none is provided', () => {
+    const markAsRead = jest.fn();
+    const { container } = render(<NotificationItem markAsRead={markAsRead} />);
+
+    fireEvent.click(container.querySelector('li'));
+
+    expect(markAsRead).toHaveBeenCalledWith(0);
   });
 
   test('calls markAsRead with its id when the li is clicked', () => {
