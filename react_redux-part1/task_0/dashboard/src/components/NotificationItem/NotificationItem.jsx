@@ -1,53 +1,59 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import { memo } from "react";
+import { StyleSheet, css } from "aphrodite";
+
+const styles = StyleSheet.create({
+  default: {
+    color: "blue",
+    "@media (max-width: 900px)": {
+      width: "100%",
+      borderBottom: "1px solid black",
+      fontSize: "20px",
+      padding: "10px 8px",
+      listStyle: "none",
+    },
+  },
+  urgent: {
+    color: "red",
+    "@media (max-width: 900px)": {
+      width: "100%",
+      borderBottom: "1px solid black",
+      fontSize: "20px",
+      padding: "10px 8px",
+      listStyle: "none",
+    },
+  },
+});
 
 const NotificationItem = memo(function NotificationItem({
   type,
   html,
-  value = '',
+  value,
   markAsRead,
   id,
 }) {
-  const notificationType = type ?? 'default';
-  const handleClick = () => {
-    if (markAsRead) markAsRead(id ?? 0);
-  };
-  const colorClass =
-    notificationType === 'urgent'
-      ? 'text-[var(--urgent-notification-item)]'
-      : 'text-[var(--default-notification-item)]';
-  const itemClass = `${colorClass} max-[912px]:w-full max-[912px]:border-b max-[912px]:border-gray-500 max-[912px]:text-[20px] max-[912px]:p-3 max-[912px]:list-none cursor-pointer`;
-
-  if (html) {
+  const itemStyle = type === "default" ? styles.default : styles.urgent;
+  // this console.log is only for test purposes and not mentionned/required in the student code
+  // console.log(`Rendering NotificationItem with id: ${id}, type: ${type}, value: ${value}`);
+  if (html !== undefined) {
     return (
       <li
-        data-notification-type={notificationType}
-        className={itemClass}
-        onClick={handleClick}
+        className={css(itemStyle)}
+        data-notification-type={type}
         dangerouslySetInnerHTML={html}
-      />
+        onClick={() => markAsRead(id)}
+      ></li>
+    );
+  } else {
+    return (
+      <li
+        className={css(itemStyle)}
+        data-notification-type={type}
+        onClick={() => markAsRead(id)}
+      >
+        {value}
+      </li>
     );
   }
-
-  return (
-    <li
-      data-notification-type={notificationType}
-      className={itemClass}
-      onClick={handleClick}
-    >
-      {value}
-    </li>
-  );
 });
-
-NotificationItem.propTypes = {
-  id: PropTypes.number,
-  type: PropTypes.string,
-  html: PropTypes.shape({
-    __html: PropTypes.string,
-  }),
-  value: PropTypes.string,
-  markAsRead: PropTypes.func,
-};
 
 export default NotificationItem;

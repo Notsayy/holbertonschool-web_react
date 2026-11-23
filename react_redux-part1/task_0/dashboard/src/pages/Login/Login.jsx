@@ -1,34 +1,106 @@
-import PropTypes from 'prop-types';
-import WithLogging from '../../components/HOC/WithLogging';
-import useLogin from '../../hooks/useLogin';
+import { StyleSheet, css } from "aphrodite";
+import WithLogging from "../../components/HOC/WithLogging";
+import useLogin from "../../hooks/useLogin";
 
-function Login({ logIn = () => {} }) {
+const styles = StyleSheet.create({
+  body: {
+    display: "flex",
+    flexDirection: "column",
+    height: "60vh",
+    padding: "20px 20px 20px 40px",
+    borderTop: "5px red solid",
+  },
+  p: {
+    fontFamily: "Roboto, sans-serif",
+    fontSize: "1.3rem",
+  },
+  form: {
+    margin: "20px 0",
+    fontSize: "1.2rem",
+    fontFamily: "Roboto, sans-serif",
+    display: "flex",
+    flexDirection: "row",
+    "@media (max-width: 900px)": {
+      flexDirection: "column",
+    },
+  },
+  label: {
+    paddingRight: "10px",
+    "@media (max-width: 900px)": {
+      display: "block",
+    },
+  },
+  input: {
+    marginRight: "10px",
+    "@media (max-width: 900px)": {
+      display: "block",
+      marginBottom: "10px",
+      paddingBottom: "5px",
+      paddingTop: "5px",
+      fontSize: "20px",
+      width: "100%",
+      boxSizing: "border-box",
+    },
+  },
+  button: {
+    cursor: "pointer",
+    "@media (max-width: 900px)": {
+      display: "block",
+      marginTop: "10px",
+      paddingBottom: "5px",
+      paddingTop: "5px",
+      fontSize: "16px",
+      width: "100%",
+      boxSizing: "border-box",
+    },
+  },
+});
+
+const Login = ({ logIn }) => {
   const {
     email,
     password,
     enableSubmit,
     handleChangeEmail,
     handleChangePassword,
-    handleLoginSubmit,
+    handleLoginSubmit
   } = useLogin(logIn);
+
   return (
-    <div className="App-login p-10 flex-1 border-t-[3px] border-[var(--main-color)] max-[520px]:px-1 max-[520px]:pt-5 max-[520px]:pb-0 max-[520px]:-mt-3 max-[520px]:mb-[195px]">
-      <p className="text-xl mb-5 max-[520px]:mb-9">Login to access the full dashboard</p>
-      <form onSubmit={handleLoginSubmit} className="flex flex-col items-start gap-2.5 max-[520px]:gap-0 sm:flex-row sm:items-center">
-        <label htmlFor="email" className="mr-1">Email</label>
-        <input type="email" id="email" name="email" value={email} onChange={handleChangeEmail} className="mr-4 border border-gray-400 rounded px-2 py-1 max-[520px]:w-60 max-[520px]:mr-0 max-[520px]:px-1 max-[520px]:py-0.5 max-[520px]:mb-1.5 max-[520px]:border-black" />
-        <label htmlFor="password" className="mr-1">Password</label>
-        <input type="password" id="password" name="password" value={password} onChange={handleChangePassword} className="mr-4 border border-gray-400 rounded px-2 py-1 max-[520px]:w-60 max-[520px]:mr-0 max-[520px]:px-1 max-[520px]:py-0.5 max-[520px]:mb-1.5 max-[520px]:border-black" />
-        <input type="submit" value="OK" disabled={!enableSubmit} className="ml-1 cursor-pointer border border-gray-400 rounded px-3 py-1 max-[520px]:ml-0 max-[520px]:mt-2 max-[520px]:px-1 max-[520px]:py-px max-[520px]:border-black" />
+    <div className={css(styles.body)}>
+      <p className={css(styles.p)}>Login to access the full dashboard</p>
+      <form className={css(styles.form)} onSubmit={handleLoginSubmit}>
+        <label htmlFor="email" className={css(styles.label)}>
+          Email
+        </label>
+        <input
+          type="email"
+          name="user_email"
+          id="email"
+          className={css(styles.input)}
+          value={email}
+          onChange={handleChangeEmail}
+        />
+        <label htmlFor="password" className={css(styles.label)}>
+          Password
+        </label>
+        <input
+          type="password"
+          name="user_password"
+          id="password"
+          className={css(styles.input)}
+          value={password}
+          onChange={handleChangePassword}
+        />
+        <input
+          type="submit"
+          value="OK"
+          className={css(styles.button)}
+          disabled={!enableSubmit}
+        />
       </form>
     </div>
   );
 }
 
-Login.propTypes = {
-  logIn: PropTypes.func,
-};
-
-const LoginWithLogging = WithLogging(Login);
-
-export default LoginWithLogging;
+export default WithLogging(Login);

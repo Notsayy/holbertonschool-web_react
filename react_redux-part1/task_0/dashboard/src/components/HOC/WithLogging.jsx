@@ -1,14 +1,20 @@
 import { Component } from 'react';
 
-function WithLogging(WrappedComponent) {
-  const componentName = WrappedComponent.displayName || WrappedComponent.name || 'Component';
-
-  class WithLoggingHOC extends Component {
+const WithLogging = (WrappedComponent) => {
+  class WithLoggingComponent extends Component {
     componentDidMount() {
+      const componentName = WrappedComponent.name
+        ? WrappedComponent.name
+        : 'Component';
+
       console.log(`Component ${componentName} is mounted`);
     }
 
     componentWillUnmount() {
+      const componentName = WrappedComponent.name
+        ? WrappedComponent.name
+        : 'Component';
+
       console.log(`Component ${componentName} is going to unmount`);
     }
 
@@ -17,10 +23,9 @@ function WithLogging(WrappedComponent) {
     }
   }
 
-  WithLoggingHOC.displayName = `WithLogging(${componentName})`;
+  WithLoggingComponent.displayName = `WithLogging(${WrappedComponent.name || 'Component'})`;
 
-  return WithLoggingHOC;
-}
+  return WithLoggingComponent;
+};
 
 export default WithLogging;
-

@@ -1,40 +1,32 @@
-import PropTypes from 'prop-types';
+import { StyleSheet, css } from 'aphrodite';
 
-function CourseListRow({ isHeader = false, textFirstCell = '', textSecondCell = null }) {
-  const headerRowClass = 'bg-table-header/45';
-  const dataRowClass = 'bg-table-rows/45';
-  const cellClass = 'border border-gray-400';
-  const tdClass = `${cellClass} pl-2`;
-
-  if (isHeader) {
-    if (textSecondCell === null) {
-      return (
-        <tr className={headerRowClass}>
-          <th colSpan="2" className={cellClass}>{textFirstCell}</th>
-        </tr>
-      );
-    }
-    return (
-      <tr className={headerRowClass}>
-        <th className={cellClass}>{textFirstCell}</th>
-        <th className={cellClass}>{textSecondCell}</th>
-      </tr>
-    );
+const styles = StyleSheet.create({
+  headerRow: {
+    backgroundColor: '#deb5b545'
+  },
+  row: {
+    backgroundColor: '#f5f5f5ab'
   }
+});
+
+export default function CourseListRow({
+  isHeader = false,
+  textFirstCell = '',
+  textSecondCell = null
+}) {
+  const rowStyle = isHeader ? styles.headerRow : styles.row;
 
   return (
-    <tr className={dataRowClass}>
-      <td className={tdClass}>{textFirstCell}</td>
-      <td className={tdClass}>{textSecondCell}</td>
-    </tr>
-  );
+    isHeader ? (
+      <tr className={css(rowStyle)}>
+        <th colSpan={textSecondCell ? 1 : 2}>{textFirstCell}</th>
+        {textSecondCell ? <th>{textSecondCell}</th> : null}
+      </tr>
+    ) : (
+      <tr className={css(rowStyle)}>
+        <td>{textFirstCell}</td>
+        <td>{textSecondCell}</td>
+      </tr>
+    )
+  )
 }
-
-CourseListRow.propTypes = {
-  isHeader: PropTypes.bool,
-  textFirstCell: PropTypes.string.isRequired,
-  textSecondCell: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-};
-
-export default CourseListRow;
-

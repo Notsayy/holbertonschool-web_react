@@ -1,80 +1,79 @@
-/* global process */
-import { createElement, useCallback, useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useCallback } from 'react';
 import axios from 'axios';
+import { StyleSheet, css } from 'aphrodite';
 import Notifications from './components/Notifications/Notifications';
+import Footer from './components/Footer/Footer';
 import Header from './components/Header/Header';
 import Login from './pages/Login/Login';
 import CourseList from './pages/CourseList/CourseList';
-import Footer from './components/Footer/Footer';
-import BodySection from './components/BodySection/BodySection';
-import BodySectionWithMarginBottom from './components/BodySectionWithMarginBottom/BodySectionWithMarginBottom';
-import appReducer, { APP_ACTIONS, initialState } from './appReducer';
 import { getLatestNotification } from './utils/utils';
+import BodySectionWithMarginBottom from './components/BodySectionWithMarginBottom/BodySectionWithMarginBottom';
+import BodySection from './components/BodySection/BodySection';
+import { appReducer, initialState, APP_ACTIONS } from './appReducer';
 
-const NOTIFICATIONS_URL = 'http://localhost:5173/notifications.json';
-const COURSES_URL = 'http://localhost:5173/courses.json';
-
-const logError = (error) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.error(error);
-  }
+const API_BASE_URL = 'http://localhost:5173';
+const ENDPOINTS = {
+  courses: `${API_BASE_URL}/courses.json`,
+  notifications: `${API_BASE_URL}/notifications.json`,
 };
 
-const withLatestNotification = (notification) =>
-  notification.html && !notification.html.__html
-    ? { ...notification, html: { __html: getLatestNotification() } }
-    : notification;
+const styles = StyleSheet.create({
+  app: {
+    position: 'relative'
+  }
+});
 
-function App() {
+export default function App() {
   const [state, dispatch] = useReducer(appReducer, initialState);
-  const { displayDrawer, user, notifications, courses } = state;
 
   useEffect(() => {
-    let isCancelled = false;
-
     const fetchNotifications = async () => {
       try {
-        const { data } = await axios.get(NOTIFICATIONS_URL);
-        if (!isCancelled && Array.isArray(data?.notifications)) {
-          dispatch({
-            type: APP_ACTIONS.SET_NOTIFICATIONS,
-            payload: data.notifications.map(withLatestNotification),
-          });
+        const response = await axios.get(ENDPOINTS.notifications);
+        const latestNotif = {
+          id: 3,
+          type: "urgent",
+          html: { __html: getLatestNotification() }
+        };
+
+        const currentNotifications = response.data.notifications;
+        const indexToReplace = currentNotifications.findIndex(
+          notification => notification.id === 3
+        );
+
+        const updatedNotifications = [...currentNotifications];
+        if (indexToReplace !== -1) {
+          updatedNotifications[indexToReplace] = latestNotif;
+        } else {
+          updatedNotifications.push(latestNotif);
         }
+
+        dispatch({ type: APP_ACTIONS.SET_NOTIFICATIONS, payload: updatedNotifications });
       } catch (error) {
-        logError(error);
+        console.error('Error fetching notifications:', error);
       }
     };
 
     fetchNotifications();
-
-    return () => {
-      isCancelled = true;
-    };
   }, []);
 
   useEffect(() => {
-    if (!user.isLoggedIn) return undefined;
-
-    let isCancelled = false;
-
     const fetchCourses = async () => {
       try {
-        const { data } = await axios.get(COURSES_URL);
-        if (!isCancelled && Array.isArray(data?.courses)) {
-          dispatch({ type: APP_ACTIONS.SET_COURSES, payload: data.courses });
-        }
+        const response = await axios.get(ENDPOINTS.courses);
+        dispatch({ type: APP_ACTIONS.SET_COURSES, payload: response.data.courses });
       } catch (error) {
-        logError(error);
+        console.error('Error fetching courses:', error);
       }
     };
 
-    fetchCourses();
+    if (!state.user.isLoggedIn) {
+      dispatch({ type: APP_ACTIONS.SET_COURSES, payload: [] });
+      return;
+    }
 
-    return () => {
-      isCancelled = true;
-    };
-  }, [user]);
+    fetchCourses();
+  }, [state.user.isLoggedIn]);
 
   const handleDisplayDrawer = useCallback(() => {
     dispatch({ type: APP_ACTIONS.TOGGLE_DRAWER });
@@ -84,63 +83,54 @@ function App() {
     dispatch({ type: APP_ACTIONS.TOGGLE_DRAWER });
   }, []);
 
-  const logIn = useCallback((email, password) => {
-    dispatch({ type: APP_ACTIONS.LOGIN, payload: { email, password } });
-  }, []);
+  const logIn = (email, password) => {
+    dispatch({
+      type: APP_ACTIONS.LOGIN,
+      payload: { email, password }
+    });
+  };
 
-  const logOut = useCallback(() => {
+  const logOut = () => {
     dispatch({ type: APP_ACTIONS.LOGOUT });
-  }, []);
+  };
 
   const markNotificationAsRead = useCallback((id) => {
+    dispatch({
+      type: APP_ACTIONS.MARK_NOTIFICATION_READ,
+      payload: id
+    });
     console.log(`Notification ${id} has been marked as read`);
-    dispatch({ type: APP_ACTIONS.MARK_NOTIFICATION_READ, payload: id });
   }, []);
 
-  return createElement(
-    'div',
-    { className: 'relative flex min-h-screen flex-col px-3' },
-    createElement(
-      'div',
-      { className: 'root-notifications' },
-      createElement(Notifications, {
-        notifications,
-        displayDrawer,
-        handleDisplayDrawer,
-        handleHideDrawer,
-        markNotificationAsRead,
-      })
-    ),
-    createElement(Header, { user, logOut }),
-    createElement(
-      'div',
-      { className: 'App-body pt-[38px]' },
-      user.isLoggedIn
-        ? createElement(
-            BodySectionWithMarginBottom,
-            { title: 'Course list' },
-            createElement(CourseList, { courses })
-          )
-        : createElement(
-            BodySectionWithMarginBottom,
-            { title: 'Log in to continue' },
-            createElement(Login, { logIn, email: user.email, password: user.password })
-          ),
-      createElement(
-        BodySection,
-        { title: 'News from the School' },
-        createElement(
-          'p',
-          null,
-          'ipsum Lorem ipsum dolor sit amet consectetur, adipisicing elit. ' +
-            'Similique, asperiores architecto blanditiis fuga doloribus sit ' +
-            'illum aliquid ea distinctio minus accusantium, impedit quo ' +
-            'voluptatibus ut magni dicta. Recusandae, quia dicta?'
-        )
-      )
-    ),
-    createElement(Footer, { user })
+  return (
+    <div className={css(styles.app)}>
+      <Notifications
+        notifications={state.notifications}
+        handleHideDrawer={handleHideDrawer}
+        handleDisplayDrawer={handleDisplayDrawer}
+        displayDrawer={state.displayDrawer}
+        markNotificationAsRead={markNotificationAsRead}
+      />
+      <>
+        <Header user={state.user} logOut={logOut} />
+        {!state.user.isLoggedIn ? (
+          <BodySectionWithMarginBottom title='Log in to continue'>
+            <Login
+              logIn={logIn}
+              email={state.user.email}
+              password={state.user.password}
+            />
+          </BodySectionWithMarginBottom>
+        ) : (
+          <BodySectionWithMarginBottom title='Course list'>
+            <CourseList courses={state.courses} />
+          </BodySectionWithMarginBottom>
+        )}
+        <BodySection title="News from the School">
+          <p>Holberton School news goes here</p>
+        </BodySection>
+      </>
+      <Footer user={state.user} />
+    </div>
   );
 }
-
-export default App;

@@ -1,35 +1,41 @@
-import PropTypes from 'prop-types';
-import holbertonLogo from '../../assets/holberton-logo.jpg';
-import { initialState } from '../../appReducer';
+import logo from "../../assets/holberton-logo.jpg";
+import { StyleSheet, css } from "aphrodite";
 
-function Header({ user = initialState.user, logOut = () => {} }) {
-  const handleLogOut = (event) => {
-    event.preventDefault();
-    logOut();
-  };
+const styles = StyleSheet.create({
+  header: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logo: {
+    height: "30vmin",
+    pointerEvents: "none",
+  },
+  h1: {
+    color: "#e1003c",
+    fontFamily: "Roboto, sans-serif",
+    fontWeight: "bold",
+    fontSize: "2.5rem",
+    margin: 0,
+  },
+  a: {
+    fontFamily: "Roboto, sans-serif",
+    fontSize: "1.2rem",
+    marginLeft: "auto",
+    cursor: "pointer",
+  },
+});
 
+export default function Header({ user, logOut }) {
   return (
-    <>
-      <div className="App-header flex items-center border-b-[3px] border-[var(--main-color)] p-2.5 px-5 max-[520px]:flex-col max-[520px]:items-center max-[520px]:px-2 max-[520px]:border-b-0 max-[520px]:border-transparent max-[520px]:pt-[7px] max-[520px]:pb-5">
-        <img src={holbertonLogo} alt="holberton logo" className="h-48 max-[520px]:h-60" />
-        <h1 className="text-[var(--main-color)] text-4xl font-bold ml-5 max-[520px]:ml-0 max-[520px]:mt-2 max-[520px]:text-center">School dashboard</h1>
-      </div>
-      {user.isLoggedIn && (
-        <section id="logoutSection" className="mt-2 px-5 max-[520px]:text-center">
-          Welcome {user.email} (<a href="#" onClick={handleLogOut} className="italic cursor-pointer">logout</a>)
-        </section>
-      )}
-    </>
+    <div className={css(styles.header)}>
+      <img src={logo} className={css(styles.logo)} alt="holberton logo" />
+      <h1 className={css(styles.h1)}>School Dashboard</h1>
+      {user.isLoggedIn ? (
+        <div id="logoutSection" className={css(styles.logoutSection)}>
+          Welcome <b>{user.email}</b> <a className={css(styles.a)} href="#" onClick={logOut}>(logout)</a>
+        </div>
+      ) : null}
+    </div>
   );
 }
-
-Header.propTypes = {
-  user: PropTypes.shape({
-    email: PropTypes.string.isRequired,
-    password: PropTypes.string.isRequired,
-    isLoggedIn: PropTypes.bool.isRequired,
-  }),
-  logOut: PropTypes.func,
-};
-
-export default Header;
