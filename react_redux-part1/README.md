@@ -5,4 +5,5 @@ This project introduces state management in React using Redux Toolkit and React-
 ## Tasks
 
 - **task_0**: Update project structure to accommodate Redux architecture
+- **task_1**: Create and test an authentication slice
 
