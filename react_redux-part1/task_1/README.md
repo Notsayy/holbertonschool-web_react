@@ -8,6 +8,11 @@ The notifications slice in `dashboard/src/features/notifications/notificationsSl
 fetches notifications, marks them as read, and controls drawer visibility.
 `fetchNotifications` returns a rejected action when the request fails.
 
+The courses slice in `dashboard/src/features/courses/coursesSlice.js` fetches
+courses with `fetchCourses` and resets its state on the authentication slice's
+`logout` action. Failed requests return a rejected action without replacing
+the existing courses.
+
 The existing application continues to use its original reducer; the slices
 prepare state for Redux integration in subsequent tasks.
 
