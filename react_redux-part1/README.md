@@ -7,4 +7,5 @@ This project introduces state management in React using Redux Toolkit and React-
 - **task_0**: Update project structure to accommodate Redux architecture
 - **task_1**: Create and test an authentication slice
 - **task_2**: Combine the Redux slices in a root reducer
+- **task_3**: Connect the Header authentication controls to the Redux store
 
