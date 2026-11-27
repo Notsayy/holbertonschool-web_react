@@ -9,4 +9,5 @@ This project introduces state management in React using Redux Toolkit and React-
 - **task_2**: Combine the Redux slices in a root reducer
 - **task_3**: Connect the Header authentication controls to the Redux store
 - **task_4**: Connect the Footer authentication display to the Redux store
+- **task_5**: Connect CourseList to the Redux courses state
 
