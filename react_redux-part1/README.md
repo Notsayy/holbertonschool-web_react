@@ -12,4 +12,5 @@ This project introduces state management in React using Redux Toolkit and React-
 - **task_5**: Connect CourseList to the Redux courses state
 - **task_6**: Connect Login to the Redux authentication state
 - **task_7**: Connect Notifications to the Redux notifications state
+- **task_8**: Integrate Redux into the application
 
